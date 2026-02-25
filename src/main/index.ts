@@ -1,7 +1,13 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { electronApp, is, optimizer } from '@electron-toolkit/utils'
+import * as dotenv from 'dotenv'
+import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { join } from 'path'
-import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+dotenv.config()
+
+// Connect to database
+import Database from './configs/database'
+Database.getInstance()
 
 function createWindow(): void {
     // Create the browser window.
