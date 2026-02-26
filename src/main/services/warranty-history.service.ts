@@ -11,6 +11,7 @@ export type WarrantyTaskType =
 export interface CreateWarrantyHistoryData {
     customerId: string
     sequenceNumber: number
+    contractNumber?: string
     date: Date
     taskType: WarrantyTaskType
     maintenanceContents?: string[]
@@ -57,6 +58,7 @@ export class WarrantyHistoryService {
         try {
             const entry = new WarrantyHistory({
                 sequenceNumber: data.sequenceNumber,
+                contractNumber: data.contractNumber ?? null,
                 date: data.date,
                 taskType: data.taskType,
                 maintenanceContents: data.maintenanceContents ?? []
@@ -93,7 +95,12 @@ export class WarrantyHistoryService {
 
     static async delete(id: string) {
         try {
-            const deleted = await WarrantyHistory.findByIdAndDelete(id).lean()
+            const deleted = await WarrantyHistory.findByIdAndUpdate(
+                id,
+                { isDeleted: true },
+                { new: true }
+            ).lean()
+
             if (!deleted) {
                 throw new Error('Warranty history entry not found: ' + id)
             }

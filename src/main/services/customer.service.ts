@@ -16,10 +16,7 @@ export interface CreateCustomerData {
 export class CustomerService {
     static async getAllCustomers(): Promise<ICustomer[]> {
         try {
-            return await Customer.find({ isDeleted: false })
-                .populate('maintenanceContracts')
-                .populate('warrantyHistory')
-                .lean()
+            return await Customer.find({ isDeleted: false }).populate('maintenanceContracts').lean()
         } catch (error) {
             console.error('', error)
             throw error

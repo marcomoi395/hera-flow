@@ -12,7 +12,6 @@ interface IWarrantyHistory extends Document {
         | 'company requested repair'
         | 'other'
     maintenanceContents: string[]
-
     isDeleted: boolean
 }
 

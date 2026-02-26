@@ -1,6 +1,6 @@
 import { Schema, model, Document, Types } from 'mongoose'
 
-interface IElevator extends Document {
+export interface IElevator extends Document {
     weight: Types.Decimal128
     numberOfStops: number
     quantity: number

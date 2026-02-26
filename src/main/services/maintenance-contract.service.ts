@@ -6,14 +6,14 @@ export interface CreateMaintenanceContractData {
     contractNumber: string
     startDate: Date
     endDate: Date
-    specifications?: string[]
+    equipmentItems?: string[]
 }
 
 export interface UpdateMaintenanceContractData {
     contractNumber?: string
     startDate?: Date
     endDate?: Date
-    specifications?: string[]
+    equipmentItems?: string[]
 }
 
 export class MaintenanceContractService {
@@ -55,7 +55,7 @@ export class MaintenanceContractService {
                 contractNumber: data.contractNumber,
                 startDate: data.startDate,
                 endDate: data.endDate,
-                specifications: data.specifications ?? []
+                equipmentItems: data.equipmentItems ?? []
             })
             const saved = await contract.save()
 
@@ -89,7 +89,12 @@ export class MaintenanceContractService {
 
     static async delete(id: string) {
         try {
-            const deleted = await MaintenanceContract.findByIdAndDelete(id).lean()
+            const deleted = await MaintenanceContract.findByIdAndUpdate(
+                id,
+                { isDeleted: true },
+                { new: true }
+            ).lean()
+
             if (!deleted) {
                 throw new Error('Maintenance contract not found: ' + id)
             }
