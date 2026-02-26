@@ -32,4 +32,4 @@ const WarrantyHistorySchema = new Schema<IWarrantyHistory>(
     { timestamps: true }
 )
 
-export const WarrantyHistory = model<IWarrantyHistory>('WarrantyHistory', WarrantyHistorySchema)
+export const WarrantyHistory = model<IWarrantyHistory>('WarrantyHistory', WarrantyHistorySchema, 'warranty_history')

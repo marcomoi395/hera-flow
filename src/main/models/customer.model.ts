@@ -1,6 +1,6 @@
 import { Types, Schema, model } from 'mongoose'
 
-interface ICustomer extends Document {
+export interface ICustomer extends Document {
     customerName: string
     companyName?: string
     address: string
@@ -42,4 +42,4 @@ const CustomerSchema = new Schema<ICustomer>(
     { timestamps: true }
 )
 
-export const Customer = model<ICustomer>('Customer', CustomerSchema)
+export const Customer = model<ICustomer>('Customer', CustomerSchema, 'customer')

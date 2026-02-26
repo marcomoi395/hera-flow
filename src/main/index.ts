@@ -9,6 +9,8 @@ dotenv.config()
 import Database from './configs/database'
 Database.getInstance()
 
+import { CustomerService } from './services/customer.service'
+
 function createWindow(): void {
     // Create the browser window.
     const mainWindow = new BrowserWindow({
@@ -57,6 +59,19 @@ app.whenReady().then(() => {
 
     // IPC test
     ipcMain.on('ping', () => console.log('pong'))
+
+    // Customer Service IPC Handlers
+    ipcMain.handle('get-all-customers', async () => {
+        return await CustomerService.getAllCustomers()
+    })
+
+    ipcMain.handle('get-customer-by-id', async (_, id: string) => {
+        return await CustomerService.getCustomerById(id)
+    })
+
+    ipcMain.handle('create-customer', async (_, data: any) => {
+        return await CustomerService.createCustomer(data)
+    })
 
     createWindow()
 

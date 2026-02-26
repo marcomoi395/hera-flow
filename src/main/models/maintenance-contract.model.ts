@@ -17,7 +17,4 @@ const MaintenanceContractSchema = new Schema<IMaintenanceContract>(
     { timestamps: true }
 )
 
-export const MaintenanceContract = model<IMaintenanceContract>(
-    'MaintenanceContract',
-    MaintenanceContractSchema
-)
+export const MaintenanceContract = model<IMaintenanceContract>('MaintenanceContract', MaintenanceContractSchema, 'maintenance_contract')
