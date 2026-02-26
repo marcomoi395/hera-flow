@@ -1,4 +1,6 @@
 import { Types, Schema, model } from 'mongoose'
+import { MaintenanceContract } from './maintenance-contract.model'
+import { WarrantyHistory } from './warranty-history.model'
 
 export interface ICustomer extends Document {
     customerName: string
@@ -25,14 +27,14 @@ const CustomerSchema = new Schema<ICustomer>(
         maintenanceContracts: [
             {
                 type: Schema.Types.ObjectId,
-                ref: 'MaintenanceContract'
+                ref: MaintenanceContract
             }
         ],
 
         warrantyHistory: [
             {
                 type: Schema.Types.ObjectId,
-                ref: 'WarrantyHistory'
+                ref: WarrantyHistory
             }
         ],
 

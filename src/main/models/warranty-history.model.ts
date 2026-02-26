@@ -2,6 +2,7 @@ import { Schema, model } from 'mongoose'
 
 interface IWarrantyHistory extends Document {
     sequenceNumber: number
+    contractNumber: Types.ObjectId
     date: Date
     taskType:
         | 'maintenance'
@@ -15,7 +16,12 @@ interface IWarrantyHistory extends Document {
 const WarrantyHistorySchema = new Schema<IWarrantyHistory>(
     {
         sequenceNumber: { type: Number, required: true },
+        contractNumber: {
+            type: Schema.Types.ObjectId,
+            ref: MaintenanceContract
+        },
         date: { type: Date, required: true },
+
         taskType: {
             type: String,
             enum: [
@@ -32,4 +38,8 @@ const WarrantyHistorySchema = new Schema<IWarrantyHistory>(
     { timestamps: true }
 )
 
-export const WarrantyHistory = model<IWarrantyHistory>('WarrantyHistory', WarrantyHistorySchema, 'warranty_history')
+export const WarrantyHistory = model<IWarrantyHistory>(
+    'WarrantyHistory',
+    WarrantyHistorySchema,
+    'warranty_history'
+)

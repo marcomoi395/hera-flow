@@ -1,20 +1,30 @@
-import { Schema, model } from 'mongoose'
+import { Types, Schema, model } from 'mongoose'
+import { Elevator } from './elevator.model'
 
 interface IMaintenanceContract extends Document {
     contractNumber: string
     startDate: Date
     endDate: Date
-    specifications: string[]
+    equipmentItems: Types.ObjectId[]
 }
 
 const MaintenanceContractSchema = new Schema<IMaintenanceContract>(
     {
         contractNumber: { type: String, unique: true },
         startDate: { type: Date, required: true },
-        endDate: { type: Date, required: true }, // Sửa từ string sang Date cho chuẩn ní nhé
-        specifications: [{ type: String }]
+        endDate: { type: Date, required: true },
+        equipmentItems: [
+            {
+                type: Schema.Types.ObjectId,
+                ref: Elevator
+            }
+        ]
     },
     { timestamps: true }
 )
 
-export const MaintenanceContract = model<IMaintenanceContract>('MaintenanceContract', MaintenanceContractSchema, 'maintenance_contract')
+export const MaintenanceContract = model<IMaintenanceContract>(
+    'MaintenanceContract',
+    MaintenanceContractSchema,
+    'maintenance_contract'
+)
