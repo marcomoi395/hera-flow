@@ -6,6 +6,7 @@ interface IMaintenanceContract extends Document {
     startDate: Date
     endDate: Date
     equipmentItems: Types.ObjectId[]
+    isDeleted: boolean
 }
 
 const MaintenanceContractSchema = new Schema<IMaintenanceContract>(
@@ -18,7 +19,8 @@ const MaintenanceContractSchema = new Schema<IMaintenanceContract>(
                 type: Schema.Types.ObjectId,
                 ref: Elevator
             }
-        ]
+        ],
+        isDeleted: { type: Boolean, default: false }
     },
     { timestamps: true }
 )

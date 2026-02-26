@@ -1,4 +1,5 @@
-import { Schema, model } from 'mongoose'
+import { Schema, model, Types } from 'mongoose'
+import { MaintenanceContract } from './maintenance-contract.model'
 
 interface IWarrantyHistory extends Document {
     sequenceNumber: number
@@ -11,6 +12,8 @@ interface IWarrantyHistory extends Document {
         | 'company requested repair'
         | 'other'
     maintenanceContents: string[]
+
+    isDeleted: boolean
 }
 
 const WarrantyHistorySchema = new Schema<IWarrantyHistory>(
@@ -33,7 +36,8 @@ const WarrantyHistorySchema = new Schema<IWarrantyHistory>(
             ],
             required: true
         },
-        maintenanceContents: [{ type: String }]
+        maintenanceContents: [{ type: String }],
+        isDeleted: { type: Boolean, default: false }
     },
     { timestamps: true }
 )
