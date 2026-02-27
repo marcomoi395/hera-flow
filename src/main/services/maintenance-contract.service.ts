@@ -20,7 +20,7 @@ export interface UpdateMaintenanceContractData {
     contractNumber?: string
     startDate?: Date
     endDate?: Date
-    equipmentItems?: string[]
+    equipmentItems?: ElevatorItemData[]
 }
 
 export class MaintenanceContractService {
@@ -96,16 +96,44 @@ export class MaintenanceContractService {
 
     static async update(id: string, data: UpdateMaintenanceContractData) {
         try {
-            const updated = await MaintenanceContract.findByIdAndUpdate(id, data, {
-                new: true
-            }).lean()
-
-            if (!updated) {
+            const contract = await MaintenanceContract.findById(id)
+            if (!contract) {
                 throw new Error('Maintenance contract not found: ' + id)
             }
 
+            let newElevatorIds: string[] | undefined
+            if (data.equipmentItems !== undefined) {
+                // Remove old elevator documents and create new ones
+                if (contract.equipmentItems?.length) {
+                    await Elevator.deleteMany({ _id: { $in: contract.equipmentItems } })
+                }
+                newElevatorIds = []
+                for (const item of data.equipmentItems) {
+                    const elevator = await new Elevator({
+                        weight: item.weight,
+                        numberOfStops: item.numberOfStops,
+                        quantity: item.quantity
+                    }).save()
+                    newElevatorIds.push(elevator._id.toString())
+                }
+            }
+
+            const updatePayload: any = {
+                ...(data.contractNumber !== undefined && { contractNumber: data.contractNumber }),
+                ...(data.startDate !== undefined && { startDate: data.startDate }),
+                ...(data.endDate !== undefined && { endDate: data.endDate }),
+                ...(newElevatorIds !== undefined && { equipmentItems: newElevatorIds })
+            }
+
+            const updated = await MaintenanceContract.findByIdAndUpdate(id, updatePayload, {
+                returnDocument: 'after'
+            }).lean()
+
             return updated
-        } catch (error) {
+        } catch (error: any) {
+            if (error.code === 11000) {
+                throw new Error(`Số hợp đồng "${data.contractNumber}" đã tồn tại`)
+            }
             console.error('Error updating maintenance contract:', error)
             throw error
         }
@@ -116,7 +144,7 @@ export class MaintenanceContractService {
             const deleted = await MaintenanceContract.findByIdAndUpdate(
                 id,
                 { isDeleted: true },
-                { new: true }
+                { returnDocument: 'after' }
             ).lean()
 
             if (!deleted) {

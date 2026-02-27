@@ -13,6 +13,16 @@ export interface CreateCustomerData {
     notes?: string
 }
 
+export interface UpdateCustomerData {
+    customerName?: string
+    companyName?: string
+    address?: string
+    contractSigningDate?: Date | null
+    acceptanceSigningDate?: Date | null
+    warrantyExpirationDate?: Date | null
+    notes?: string[]
+}
+
 export class CustomerService {
     static async getAllCustomers(): Promise<ICustomer[]> {
         try {
@@ -42,8 +52,10 @@ export class CustomerService {
             if (Array.isArray(result.maintenanceContracts)) {
                 result.maintenanceContracts = result.maintenanceContracts.map((contract: any) => ({
                     ...contract,
+                    _id: contract._id.toString(),
                     equipmentItems: (contract.equipmentItems ?? []).map((item: any) => ({
                         ...item,
+                        _id: item._id?.toString(),
                         weight: parseFloat(item.weight?.toString() ?? '0')
                     }))
                 }))
@@ -69,5 +81,57 @@ export class CustomerService {
         })
 
         return (await newCustomer.save()).toObject()
+    }
+
+    static async updateCustomer(id: string, data: UpdateCustomerData) {
+        try {
+            const updated = await Customer.findOneAndUpdate(
+                { _id: id, isDeleted: false },
+                {
+                    ...(data.customerName !== undefined && { customerName: data.customerName }),
+                    ...(data.companyName !== undefined && { companyName: data.companyName }),
+                    ...(data.address !== undefined && { address: data.address }),
+                    ...(data.contractSigningDate !== undefined && {
+                        contractSigningDate: data.contractSigningDate
+                    }),
+                    ...(data.acceptanceSigningDate !== undefined && {
+                        acceptanceSigningDate: data.acceptanceSigningDate
+                    }),
+                    ...(data.warrantyExpirationDate !== undefined && {
+                        warrantyExpirationDate: data.warrantyExpirationDate
+                    }),
+                    ...(data.notes !== undefined && { notes: data.notes })
+                },
+                { returnDocument: 'after' }
+            ).lean()
+
+            if (!updated) {
+                throw new Error('Customer not found: ' + id)
+            }
+
+            return { ...updated, _id: updated._id.toString() }
+        } catch (error) {
+            console.error('Lỗi khi cập nhật khách hàng:', error)
+            throw error
+        }
+    }
+
+    static async deleteCustomer(id: string) {
+        try {
+            const deleted = await Customer.findOneAndUpdate(
+                { _id: id, isDeleted: false },
+                { isDeleted: true },
+                { returnDocument: 'after' }
+            ).lean()
+
+            if (!deleted) {
+                throw new Error('Customer not found: ' + id)
+            }
+
+            return { ...deleted, _id: deleted._id.toString() }
+        } catch (error) {
+            console.error('Lỗi khi xóa khách hàng:', error)
+            throw error
+        }
     }
 }

@@ -79,7 +79,7 @@ export class WarrantyHistoryService {
     static async update(id: string, data: UpdateWarrantyHistoryData) {
         try {
             const updated = await WarrantyHistory.findByIdAndUpdate(id, data, {
-                new: true
+                returnDocument: 'after'
             }).lean()
 
             if (!updated) {
@@ -98,7 +98,7 @@ export class WarrantyHistoryService {
             const deleted = await WarrantyHistory.findByIdAndUpdate(
                 id,
                 { isDeleted: true },
-                { new: true }
+                { returnDocument: 'after' }
             ).lean()
 
             if (!deleted) {
