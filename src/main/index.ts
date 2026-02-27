@@ -10,14 +10,18 @@ import Database from './configs/database'
 Database.getInstance()
 
 import { CustomerService } from './services/customer.service'
+import { MaintenanceContractService } from './services/maintenance-contract.service'
+import { WarrantyHistoryService } from './services/warranty-history.service'
 
 function createWindow(): void {
     // Create the browser window.
     const mainWindow = new BrowserWindow({
-        width: 900,
-        height: 670,
+        width: 1280,
+        height: 800,
+        minWidth: 1024, // Giới hạn không cho thu nhỏ quá mức
+        minHeight: 700,
         show: false,
-        autoHideMenuBar: true,
+        autoHideMenuBar: false,
         ...(process.platform === 'linux' ? { icon } : {}),
         webPreferences: {
             preload: join(__dirname, '../preload/index.js'),
@@ -73,12 +77,54 @@ app.whenReady().then(() => {
         return await CustomerService.createCustomer(data)
     })
 
+    ipcMain.handle('get-all-maintenance-contracts', async (_, customerId: string) => {
+        return await MaintenanceContractService.getAllByCustomer(customerId)
+    })
+
+    ipcMain.handle('get-maintenance-contract', async (_, id: string) => {
+        return await MaintenanceContractService.getById(id)
+    })
+
+    ipcMain.handle('create-maintenance-contract', async (_, data: any) => {
+        return await MaintenanceContractService.create(data)
+    })
+
+    ipcMain.handle('update-maintenance-contract', async (_, id: string, data: any) => {
+        return await MaintenanceContractService.update(id, data)
+    })
+
+    ipcMain.handle('delete-maintenance-contract', async (_, id: string) => {
+        return await MaintenanceContractService.delete(id)
+    })
+
+    ipcMain.handle('get-all-warranty-history', async (_, customerId: string) => {
+        return await WarrantyHistoryService.getAllByCustomer(customerId)
+    })
+
+    ipcMain.handle('get-warranty-history', async (_, id: string) => {
+        return await WarrantyHistoryService.getById(id)
+    })
+
+    ipcMain.handle('create-warranty-history', async (_, data: any) => {
+        return await WarrantyHistoryService.create(data)
+    })
+
+    ipcMain.handle('update-warranty-history', async (_, id: string, data: any) => {
+        return await WarrantyHistoryService.update(id, data)
+    })
+
+    ipcMain.handle('delete-warranty-history', async (_, id: string) => {
+        return await WarrantyHistoryService.delete(id)
+    })
+
     createWindow()
 
     app.on('activate', function () {
         // On macOS it's common to re-create a window in the app when the
         // dock icon is clicked and there are no other windows open.
-        if (BrowserWindow.getAllWindows().length === 0) createWindow()
+        if (BrowserWindow.getAllWindows().length === 0) {
+            createWindow()
+        }
     })
 })
 
