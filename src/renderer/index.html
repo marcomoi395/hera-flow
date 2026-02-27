@@ -1,44 +1,140 @@
 <!doctype html>
-<html>
+<html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <title>Electron</title>
-        <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Hera Elevator System</title>
         <meta
             http-equiv="Content-Security-Policy"
-            content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
+            content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data:"
         />
-
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
         <link href="./assets/main.css" type="text/css" rel="stylesheet" />
     </head>
 
     <body>
-        <div id="app">
-            <img alt="logo" class="logo" src="./assets/electron.svg" />
-            <div class="creator">Powered by electron-vite</div>
-            <div class="text">
-                Build an Electron app with
-                <span class="ts">TypeScript</span>
-            </div>
-            <p class="tip">Please try pressing <code>F12</code> to open the devTool</p>
-            <div class="actions">
-                <div class="action">
-                    <a href="https://electron-vite.org/" target="_blank" rel="noreferrer"
-                        >Documentation</a
-                    >
-                </div>
-                <div class="action">
-                    <a id="ipcHandler" target="_blank" rel="noreferrer">Send IPC</a>
-                </div>
-            </div>
+        <div id="app" class="app-container"></div>
 
-            <ul class="versions">
-                <li class="electron-version"></li>
-                <li class="chrome-version"></li>
-                <li class="node-version"></li>
-            </ul>
+        <!-- Add Customer Modal -->
+        <div id="addCustomerModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Thêm Khách Hàng Mới</h2>
+                    <button class="close-btn" id="closeAddCustomerModalBtn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="addCustomerForm">
+                        <div class="form-section">
+                            <h3>Thông tin Khách Hàng</h3>
+                            <div class="form-group">
+                                <label for="customerName"
+                                    >Tên khách hàng <span class="required">*</span></label
+                                >
+                                <input type="text" id="customerName" name="customerName" required />
+                            </div>
+                            <div class="form-group">
+                                <label for="companyName">Tên công ty</label>
+                                <input type="text" id="companyName" name="companyName" />
+                            </div>
+                            <div class="form-group">
+                                <label for="address">Địa chỉ <span class="required">*</span></label>
+                                <input type="text" id="address" name="address" required />
+                            </div>
+                            <div class="form-group-row">
+                                <div class="form-group">
+                                    <label for="contractSigningDate">Ngày ký hợp đồng</label>
+                                    <input
+                                        type="date"
+                                        id="contractSigningDate"
+                                        name="contractSigningDate"
+                                    />
+                                </div>
+                                <div class="form-group">
+                                    <label for="acceptanceSigningDate">Ngày nghiệm thu</label>
+                                    <input
+                                        type="date"
+                                        id="acceptanceSigningDate"
+                                        name="acceptanceSigningDate"
+                                    />
+                                </div>
+                                <div class="form-group">
+                                    <label for="warrantyExpirationDate"
+                                        >Ngày hết hạn bảo hành</label
+                                    >
+                                    <input
+                                        type="date"
+                                        id="warrantyExpirationDate"
+                                        name="warrantyExpirationDate"
+                                    />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="notes">Ghi chú</label>
+                                <textarea id="notes" name="notes" rows="2"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button
+                                type="button"
+                                class="btn btn-secondary"
+                                id="cancelAddCustomerBtn"
+                            >
+                                Bỏ Qua
+                            </button>
+                            <button type="submit" class="btn btn-primary" id="saveCustomerBtn">
+                                Lưu Lại
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Maintenance Contract Modal -->
+        <div id="addContractModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Thêm Hợp Đồng Bảo Trì</h2>
+                    <button class="close-btn" id="closeAddContractModalBtn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="addContractForm">
+                        <div class="form-section">
+                            <h3>Thông tin Hợp Đồng</h3>
+                            <div class="form-group">
+                                <label for="contractNumber">Số hợp đồng <span class="required">*</span></label>
+                                <input type="text" id="contractNumber" name="contractNumber" required />
+                            </div>
+                            <div class="form-group-row">
+                                <div class="form-group">
+                                    <label for="startDate">Ngày bắt đầu <span class="required">*</span></label>
+                                    <input type="date" id="startDate" name="startDate" required />
+                                </div>
+                                <div class="form-group">
+                                    <label for="endDate">Ngày kết thúc <span class="required">*</span></label>
+                                    <input type="date" id="endDate" name="endDate" required />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Thiết bị bảo trì</label>
+                                <div id="equipmentItemsList"></div>
+                                <button type="button" class="btn btn-secondary" id="addEquipmentItemBtn" style="margin-top:8px">+ Thêm thiết bị</button>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" id="cancelAddContractBtn">Bỏ Qua</button>
+                            <button type="submit" class="btn btn-primary" id="saveContractBtn">Lưu Lại</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
 
         <script type="module" src="./src/renderer.ts"></script>
     </body>
 </html>
+
