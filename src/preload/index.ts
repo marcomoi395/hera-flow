@@ -54,7 +54,12 @@ const api = {
         electronAPI.ipcRenderer.invoke('trash-permanent-delete-customer', id),
     trashPermanentDeleteContract: (id: string) =>
         electronAPI.ipcRenderer.invoke('trash-permanent-delete-contract', id),
-    trashEmpty: () => electronAPI.ipcRenderer.invoke('trash-empty')
+    trashEmpty: () => electronAPI.ipcRenderer.invoke('trash-empty'),
+
+    getMaintenanceReportCandidates: () =>
+        electronAPI.ipcRenderer.invoke('get-maintenance-report-candidates'),
+    generateMaintenanceReports: (requests: any[]) =>
+        electronAPI.ipcRenderer.invoke('generate-maintenance-reports', requests),
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

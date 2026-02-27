@@ -29,6 +29,9 @@ declare global {
             trashPermanentDeleteCustomer: (id: string) => Promise<any>
             trashPermanentDeleteContract: (id: string) => Promise<any>
             trashEmpty: () => Promise<any>
+
+            getMaintenanceReportCandidates: () => Promise<any[]>
+            generateMaintenanceReports: (requests: any[]) => Promise<{ canceled: boolean; files: string[] }>
         }
     }
 }

@@ -1,6 +1,6 @@
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import * as dotenv from 'dotenv'
-import { app, BrowserWindow, ipcMain, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { join } from 'path'
 import icon from '../../resources/icon.png?asset'
 dotenv.config()
@@ -13,6 +13,7 @@ import { CustomerService } from './services/customer.service'
 import { MaintenanceContractService } from './services/maintenance-contract.service'
 import { WarrantyHistoryService } from './services/warranty-history.service'
 import { TrashService } from './services/trash.service'
+import { ReportService } from './services/report.service'
 
 function createWindow(): void {
     // Create the browser window.
@@ -153,6 +154,23 @@ app.whenReady().then(() => {
 
     ipcMain.handle('trash-empty', async () => {
         return await TrashService.emptyTrash()
+    })
+
+    ipcMain.handle('get-maintenance-report-candidates', async () => {
+        return await ReportService.getMaintenanceReportCandidates()
+    })
+
+    ipcMain.handle('generate-maintenance-reports', async (_, requests: any[]) => {
+        const result = await dialog.showOpenDialog({
+            title: 'Chọn thư mục lưu file',
+            properties: ['openDirectory', 'createDirectory']
+        })
+        if (result.canceled || result.filePaths.length === 0) {
+            return { canceled: true, files: [] }
+        }
+        const outputFolder = result.filePaths[0]
+        const files = await ReportService.generateMaintenanceReports(requests, outputFolder)
+        return { canceled: false, files }
     })
 
     createWindow()
