@@ -1,7 +1,40 @@
 function init(): void {
     window.addEventListener('DOMContentLoaded', () => {
+        setupSidebar()
         renderListPage()
     })
+}
+
+// ─── SIDEBAR ──────────────────────────────────────────────────────────────────
+
+function setupSidebar(): void {
+    const sidebar = document.getElementById('sidebar')!
+    const toggleBtn = document.getElementById('sidebarToggleBtn')!
+    const navCustomers = document.getElementById('navCustomers')!
+    const navTrash = document.getElementById('navTrash')!
+
+    const collapsed = localStorage.getItem('sidebarCollapsed') === 'true'
+    if (collapsed) sidebar.classList.add('collapsed')
+
+    toggleBtn.addEventListener('click', () => {
+        sidebar.classList.toggle('collapsed')
+        localStorage.setItem('sidebarCollapsed', String(sidebar.classList.contains('collapsed')))
+    })
+
+    navCustomers.addEventListener('click', () => {
+        setActiveNav('navCustomers')
+        renderListPage()
+    })
+
+    navTrash.addEventListener('click', () => {
+        setActiveNav('navTrash')
+        renderTrashPage()
+    })
+}
+
+function setActiveNav(activeId: string): void {
+    document.querySelectorAll('.sidebar-nav-item').forEach((el) => el.classList.remove('active'))
+    document.getElementById(activeId)?.classList.add('active')
 }
 
 // ─── DATE VALIDATION ─────────────────────────────────────────────────────────
@@ -37,6 +70,7 @@ function validateContractDates(startDate: string, endDate: string): string | nul
 // ─── LIST PAGE ────────────────────────────────────────────────────────────────
 
 function renderListPage(): void {
+    setActiveNav('navCustomers')
     const app = document.getElementById('app')!
     app.innerHTML = `
         <header class="app-header">
@@ -728,6 +762,222 @@ function openEditContractModal(contract: any): void {
     }
 
     modal?.classList.add('show')
+}
+
+// ─── TRASH PAGE ───────────────────────────────────────────────────────────────
+
+async function renderTrashPage(): Promise<void> {
+    setActiveNav('navTrash')
+    const app = document.getElementById('app')!
+    app.innerHTML = `
+        <header class="app-header">
+            <div class="header-brand">
+                <div class="header-logo">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                    </svg>
+                </div>
+                <div class="header-text">
+                    <h1>Thùng Rác</h1>
+                    <p class="header-subtitle">Khôi phục hoặc xóa vĩnh viễn các mục đã xóa</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="btn-empty-trash" id="emptyTrashBtn">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                    </svg>
+                    Xóa tất cả
+                </button>
+            </div>
+        </header>
+        <main class="app-main">
+            <div id="trashLoading" class="loading-spinner">Đang tải dữ liệu...</div>
+            <div id="trashContainer"></div>
+        </main>
+    `
+    document.getElementById('emptyTrashBtn')!.addEventListener('click', async () => {
+        if (!confirm('Xóa vĩnh viễn tất cả các mục trong thùng rác? Hành động này không thể hoàn tác.'))
+            return
+        try {
+            await window.api.trashEmpty()
+            loadTrashData()
+        } catch {
+            alert('Lỗi khi dọn thùng rác!')
+        }
+    })
+    loadTrashData()
+}
+
+async function loadTrashData(): Promise<void> {
+    const loadingEl = document.getElementById('trashLoading')
+    const container = document.getElementById('trashContainer')
+    if (!container) return
+
+    try {
+        const [customers, contracts] = await Promise.all([
+            window.api.trashGetDeletedCustomers(),
+            window.api.trashGetDeletedContracts()
+        ])
+
+        if (loadingEl) loadingEl.style.display = 'none'
+
+        const emptyTrashBtn = document.getElementById('emptyTrashBtn') as HTMLButtonElement | null
+        if (emptyTrashBtn) emptyTrashBtn.style.display =
+            customers.length === 0 && contracts.length === 0 ? 'none' : ''
+
+        if (customers.length === 0 && contracts.length === 0) {
+            container.innerHTML = `
+                <div class="trash-empty">
+                    <div class="trash-empty-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                        </svg>
+                    </div>
+                    <p class="trash-empty-title">Thùng rác trống</p>
+                    <p class="trash-empty-sub">Các mục bị xóa sẽ xuất hiện ở đây</p>
+                </div>
+            `
+            return
+        }
+
+        const fmt = (d?: string | null) => (d ? new Date(d).toLocaleDateString('vi-VN') : '—')
+
+        const iconPerson = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`
+        const iconContract = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`
+        const iconRestore = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>`
+        const iconDelete = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`
+
+        container.innerHTML = `
+            ${customers.length > 0 ? `
+            <div class="trash-section">
+                <div class="trash-section-header">
+                    <span class="trash-section-title">Khách hàng</span>
+                    <span class="trash-count">${customers.length}</span>
+                </div>
+                <div class="trash-grid">
+                    ${customers.map((c: any) => `
+                    <div class="trash-card trash-card--customer">
+                        <div class="trash-card-header">
+                            <div class="trash-card-icon trash-card-icon--person">${iconPerson}</div>
+                            <div class="trash-card-meta">
+                                <span class="trash-card-name">${c.customerName}</span>
+                                ${c.companyName ? `<span class="trash-card-sub">${c.companyName}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="trash-card-body">
+                            <div class="trash-card-row">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                <span>${c.address}</span>
+                            </div>
+                        </div>
+                        <div class="trash-card-actions">
+                            <button class="trash-btn-restore" data-restore-customer="${c._id}">
+                                ${iconRestore} Khôi phục
+                            </button>
+                            <button class="trash-btn-delete" data-perm-delete-customer="${c._id}" title="Xóa vĩnh viễn">
+                                ${iconDelete}
+                            </button>
+                        </div>
+                    </div>
+                    `).join('')}
+                </div>
+            </div>` : ''}
+
+            ${contracts.length > 0 ? `
+            <div class="trash-section">
+                <div class="trash-section-header">
+                    <span class="trash-section-title">Hợp đồng bảo trì</span>
+                    <span class="trash-count">${contracts.length}</span>
+                </div>
+                <div class="trash-grid">
+                    ${contracts.map((c: any) => `
+                    <div class="trash-card trash-card--contract">
+                        <div class="trash-card-header">
+                            <div class="trash-card-icon trash-card-icon--contract">${iconContract}</div>
+                            <div class="trash-card-meta">
+                                <span class="trash-card-name">${c.contractNumber || '—'}</span>
+                                <span class="trash-card-sub">Hợp đồng bảo trì</span>
+                            </div>
+                        </div>
+                        <div class="trash-card-body">
+                            <div class="trash-card-row">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                <span>${fmt(c.startDate)} → ${fmt(c.endDate)}</span>
+                            </div>
+                        </div>
+                        <div class="trash-card-actions">
+                            <button class="trash-btn-restore" data-restore-contract="${c._id}">
+                                ${iconRestore} Khôi phục
+                            </button>
+                            <button class="trash-btn-delete" data-perm-delete-contract="${c._id}" title="Xóa vĩnh viễn">
+                                ${iconDelete}
+                            </button>
+                        </div>
+                    </div>
+                    `).join('')}
+                </div>
+            </div>` : ''}
+        `
+
+        container.querySelectorAll('[data-restore-customer]').forEach((btn) => {
+            btn.addEventListener('click', async () => {
+                const id = (btn as HTMLElement).dataset.restoreCustomer!
+                if (!confirm('Khôi phục khách hàng này và các hợp đồng liên quan?')) return
+                try {
+                    await window.api.trashRestoreCustomer(id)
+                    loadTrashData()
+                } catch {
+                    alert('Lỗi khi khôi phục khách hàng!')
+                }
+            })
+        })
+
+        container.querySelectorAll('[data-perm-delete-customer]').forEach((btn) => {
+            btn.addEventListener('click', async () => {
+                const id = (btn as HTMLElement).dataset.permDeleteCustomer!
+                if (!confirm('Xóa vĩnh viễn khách hàng này? Hành động không thể hoàn tác.')) return
+                try {
+                    await window.api.trashPermanentDeleteCustomer(id)
+                    loadTrashData()
+                } catch {
+                    alert('Lỗi khi xóa vĩnh viễn!')
+                }
+            })
+        })
+
+        container.querySelectorAll('[data-restore-contract]').forEach((btn) => {
+            btn.addEventListener('click', async () => {
+                const id = (btn as HTMLElement).dataset.restoreContract!
+                if (!confirm('Khôi phục hợp đồng bảo trì này?')) return
+                try {
+                    await window.api.trashRestoreContract(id)
+                    loadTrashData()
+                } catch {
+                    alert('Lỗi khi khôi phục hợp đồng!')
+                }
+            })
+        })
+
+        container.querySelectorAll('[data-perm-delete-contract]').forEach((btn) => {
+            btn.addEventListener('click', async () => {
+                const id = (btn as HTMLElement).dataset.permDeleteContract!
+                if (!confirm('Xóa vĩnh viễn hợp đồng này? Hành động không thể hoàn tác.')) return
+                try {
+                    await window.api.trashPermanentDeleteContract(id)
+                    loadTrashData()
+                } catch {
+                    alert('Lỗi khi xóa vĩnh viễn!')
+                }
+            })
+        })
+    } catch (error) {
+        console.error('Lỗi khi tải thùng rác:', error)
+        if (loadingEl) {
+            loadingEl.style.color = '#ef4444'
+            loadingEl.innerText = 'Lỗi tải dữ liệu.'
+        }
+    }
 }
 
 init()
