@@ -69,8 +69,15 @@ function validateContractDates(startDate: string, endDate: string): string | nul
 
 // ─── LIST PAGE ────────────────────────────────────────────────────────────────
 
+// Filter state for the customer list
+let allCustomers: any[] = []
+let activeFilter: 'all' | 'active' | 'expiring' | 'expired' = 'all'
+let searchQuery = ''
+
 function renderListPage(): void {
     setActiveNav('navCustomers')
+    activeFilter = 'all'
+    searchQuery = ''
     const app = document.getElementById('app')!
     app.innerHTML = `
         <header class="app-header">
@@ -93,6 +100,18 @@ function renderListPage(): void {
             </div>
         </header>
         <main class="app-main">
+            <div class="filter-bar">
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-filter="all">Tất cả</button>
+                    <button class="filter-btn" data-filter="active">Còn hạn BH</button>
+                    <button class="filter-btn filter-btn--warning" data-filter="expiring">Sắp hết hạn</button>
+                    <button class="filter-btn filter-btn--danger" data-filter="expired">Hết hạn BH</button>
+                </div>
+                <div class="filter-search">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" id="customerSearch" class="filter-search-input" placeholder="Tìm theo tên, công ty, địa chỉ...">
+                </div>
+            </div>
             <div id="loading" class="loading-spinner">Đang tải dữ liệu...</div>
             <div id="customersContainer"></div>
         </main>
@@ -100,6 +119,113 @@ function renderListPage(): void {
     loadCustomers()
     setupAddCustomerForm()
     setupEditCustomerForm()
+    setupFilterBar()
+}
+
+function setupFilterBar(): void {
+    document.querySelectorAll('.filter-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            activeFilter = (btn as HTMLElement).dataset.filter as typeof activeFilter
+            document.querySelectorAll('.filter-btn').forEach((b) => b.classList.remove('active'))
+            btn.classList.add('active')
+            renderFilteredTable()
+        })
+    })
+    const searchInput = document.getElementById('customerSearch') as HTMLInputElement
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            searchQuery = searchInput.value.trim().toLowerCase()
+            renderFilteredTable()
+        })
+    }
+}
+
+function getWarrantyStatus(customer: any): 'active' | 'expiring' | 'expired' | 'none' {
+    if (!customer.warrantyExpirationDate) return 'none'
+    const now = new Date()
+    const exp = new Date(customer.warrantyExpirationDate)
+    const daysLeft = (exp.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+    if (daysLeft < 0) return 'expired'
+    if (daysLeft <= 30) return 'expiring'
+    return 'active'
+}
+
+function applyFilter(customers: any[]): any[] {
+    return customers.filter((c) => {
+        if (activeFilter !== 'all') {
+            const status = getWarrantyStatus(c)
+            if (activeFilter === 'active' && status !== 'active') return false
+            if (activeFilter === 'expiring' && status !== 'expiring') return false
+            if (activeFilter === 'expired' && status !== 'expired') return false
+        }
+        if (searchQuery) {
+            const haystack = [c.customerName, c.companyName, c.address].join(' ').toLowerCase()
+            if (!haystack.includes(searchQuery)) return false
+        }
+        return true
+    })
+}
+
+function renderFilteredTable(): void {
+    const containerEl = document.getElementById('customersContainer')
+    if (!containerEl) return
+
+    const filtered = applyFilter(allCustomers)
+
+    if (filtered.length === 0) {
+        containerEl.innerHTML =
+            '<div class="empty-state">Không tìm thấy khách hàng phù hợp.</div>'
+        return
+    }
+
+    containerEl.innerHTML = `
+        <table class="customers-table">
+            <thead>
+                <tr>
+                    <th class="col-no">#</th>
+                    <th>Tên khách hàng</th>
+                    <th>Công ty</th>
+                    <th>Địa chỉ</th>
+                    <th class="col-center">Ngày ký HĐ</th>
+                    <th class="col-center">Ngày nghiệm thu</th>
+                    <th class="col-center">Hết hạn BH</th>
+                    <th class="col-center">Ghi chú</th>
+                    <th class="col-action"></th>
+                </tr>
+            </thead>
+            <tbody>
+                ${filtered.map((c, i) => renderCustomerRow(c, i)).join('')}
+            </tbody>
+        </table>
+    `
+    containerEl.querySelectorAll('[data-customer-id]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            renderDetailPage((btn as HTMLElement).dataset.customerId!)
+        })
+    })
+    containerEl.querySelectorAll('[data-edit-customer-id]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const id = (btn as HTMLElement).dataset.editCustomerId!
+            const customer = allCustomers.find((c: any) => c._id === id)
+            if (customer) openEditCustomerModal(customer)
+        })
+    })
+    containerEl.querySelectorAll('[data-delete-customer-id]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+            const id = (btn as HTMLElement).dataset.deleteCustomerId!
+            const customer = allCustomers.find((c: any) => c._id === id)
+            const name = customer?.customerName ?? 'khách hàng này'
+            if (!confirm(`Bạn có chắc muốn xóa "${name}"?\nHành động này không thể hoàn tác.`))
+                return
+            try {
+                await window.api.deleteCustomer(id)
+                loadCustomers()
+            } catch (error) {
+                console.error('Lỗi khi xóa khách hàng:', error)
+                alert('Có lỗi xảy ra khi xóa khách hàng!')
+            }
+        })
+    })
 }
 
 function setupAddCustomerForm(): void {
@@ -265,6 +391,7 @@ async function loadCustomers(): Promise<void> {
 
     try {
         const customers = await window.api.getAllCustomers()
+        allCustomers = customers ?? []
 
         if (loadingEl) {
             loadingEl.style.display = 'none'
@@ -278,56 +405,7 @@ async function loadCustomers(): Promise<void> {
             return
         }
 
-        if (containerEl) {
-            containerEl.innerHTML = `
-                <table class="customers-table">
-                    <thead>
-                        <tr>
-                            <th class="col-no">#</th>
-                            <th>Tên khách hàng</th>
-                            <th>Công ty</th>
-                            <th>Địa chỉ</th>
-                            <th class="col-center">Ngày ký HĐ</th>
-                            <th class="col-center">Ngày nghiệm thu</th>
-                            <th class="col-center">Hết hạn BH</th>
-                            <th class="col-center">Ghi chú</th>
-                            <th class="col-action"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${customers.map((c, i) => renderCustomerRow(c, i)).join('')}
-                    </tbody>
-                </table>
-            `
-            containerEl.querySelectorAll('[data-customer-id]').forEach((btn) => {
-                btn.addEventListener('click', () => {
-                    renderDetailPage((btn as HTMLElement).dataset.customerId!)
-                })
-            })
-            containerEl.querySelectorAll('[data-edit-customer-id]').forEach((btn) => {
-                btn.addEventListener('click', () => {
-                    const id = (btn as HTMLElement).dataset.editCustomerId!
-                    const customer = customers.find((c: any) => c._id === id)
-                    if (customer) openEditCustomerModal(customer)
-                })
-            })
-            containerEl.querySelectorAll('[data-delete-customer-id]').forEach((btn) => {
-                btn.addEventListener('click', async () => {
-                    const id = (btn as HTMLElement).dataset.deleteCustomerId!
-                    const customer = customers.find((c: any) => c._id === id)
-                    const name = customer?.customerName ?? 'khách hàng này'
-                    if (!confirm(`Bạn có chắc muốn xóa "${name}"?\nHành động này không thể hoàn tác.`))
-                        return
-                    try {
-                        await window.api.deleteCustomer(id)
-                        loadCustomers()
-                    } catch (error) {
-                        console.error('Lỗi khi xóa khách hàng:', error)
-                        alert('Có lỗi xảy ra khi xóa khách hàng!')
-                    }
-                })
-            })
-        }
+        renderFilteredTable()
     } catch (error) {
         console.error('Lỗi khi tải dữ liệu khách hàng:', error)
         if (loadingEl) {
@@ -335,6 +413,19 @@ async function loadCustomers(): Promise<void> {
             loadingEl.innerText = 'Lỗi tải dữ liệu. Hãy kiểm tra lại kết nối cơ sở dữ liệu.'
         }
     }
+}
+
+function renderWarrantyCell(customer: any): string {
+    if (!customer.warrantyExpirationDate) return '<td class="col-center">—</td>'
+    const status = getWarrantyStatus(customer)
+    const dateStr = new Date(customer.warrantyExpirationDate).toLocaleDateString('vi-VN')
+    const badgeClass =
+        status === 'expired'
+            ? 'warranty-badge warranty-badge--expired'
+            : status === 'expiring'
+              ? 'warranty-badge warranty-badge--expiring'
+              : 'warranty-badge warranty-badge--active'
+    return `<td class="col-center"><span class="${badgeClass}">${dateStr}</span></td>`
 }
 
 function renderCustomerRow(customer: any, index: number): string {
@@ -348,7 +439,7 @@ function renderCustomerRow(customer: any, index: number): string {
             <td>${customer.address}</td>
             <td class="col-center">${fmt(customer.contractSigningDate)}</td>
             <td class="col-center">${fmt(customer.acceptanceSigningDate)}</td>
-            <td class="col-center">${fmt(customer.warrantyExpirationDate)}</td>
+            ${renderWarrantyCell(customer)}
             <td class="col-center">${notes}</td>
             <td class="col-action">
                 <div class="row-actions">

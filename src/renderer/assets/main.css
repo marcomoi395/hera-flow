@@ -870,6 +870,124 @@ body {
     padding: 1.75rem 2rem 2rem;
 }
 
+/* ── Filter bar ─────────────────────────────────────────────────────────────── */
+
+.filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.4rem 1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-family: inherit;
+    border-radius: 99px;
+    border: 1.5px solid var(--border-color);
+    background: var(--card-bg);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    white-space: nowrap;
+}
+
+.filter-btn:hover {
+    background: #f0f6ff;
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.filter-btn.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #fff;
+}
+
+.filter-btn--warning:hover,
+.filter-btn--warning.active {
+    background: #f59e0b;
+    border-color: #f59e0b;
+    color: #fff;
+}
+
+.filter-btn--danger:hover,
+.filter-btn--danger.active {
+    background: #ef4444;
+    border-color: #ef4444;
+    color: #fff;
+}
+
+.filter-search {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--card-bg);
+    border: 1.5px solid var(--border-color);
+    border-radius: 99px;
+    padding: 0.35rem 0.875rem;
+    color: var(--text-secondary);
+    flex: 1;
+    min-width: 200px;
+    max-width: 340px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.filter-search:focus-within {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.filter-search-input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    width: 100%;
+}
+
+.filter-search-input::placeholder {
+    color: var(--text-secondary);
+}
+
+/* ── Warranty badges ─────────────────────────────────────────────────────────── */
+
+.warranty-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.warranty-badge--active {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+.warranty-badge--expiring {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+.warranty-badge--expired {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
 .btn-empty-trash {
     display: inline-flex;
     align-items: center;
