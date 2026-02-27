@@ -4,6 +4,36 @@ function init(): void {
     })
 }
 
+// ─── DATE VALIDATION ─────────────────────────────────────────────────────────
+
+function validateCustomerDates(
+    signingDate: string | null,
+    acceptanceDate: string | null,
+    warrantyDate: string | null
+): string | null {
+    const d1 = signingDate ? new Date(signingDate) : null
+    const d2 = acceptanceDate ? new Date(acceptanceDate) : null
+    const d3 = warrantyDate ? new Date(warrantyDate) : null
+
+    if (d1 && d2 && d2 < d1) {
+        return 'Ngày nghiệm thu phải sau hoặc bằng ngày ký hợp đồng.'
+    }
+    if (d2 && d3 && d3 < d2) {
+        return 'Ngày hết hạn bảo hành phải sau hoặc bằng ngày nghiệm thu.'
+    }
+    if (d1 && !d2 && d3 && d3 < d1) {
+        return 'Ngày hết hạn bảo hành phải sau hoặc bằng ngày ký hợp đồng.'
+    }
+    return null
+}
+
+function validateContractDates(startDate: string, endDate: string): string | null {
+    if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+        return 'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.'
+    }
+    return null
+}
+
 // ─── LIST PAGE ────────────────────────────────────────────────────────────────
 
 function renderListPage(): void {
@@ -79,6 +109,16 @@ function setupAddCustomerForm(): void {
             }
         })
 
+        const dateError = validateCustomerDates(
+            data.contractSigningDate,
+            data.acceptanceSigningDate,
+            data.warrantyExpirationDate
+        )
+        if (dateError) {
+            alert(dateError)
+            return
+        }
+
         try {
             if (saveBtn) {
                 saveBtn.disabled = true
@@ -133,6 +173,17 @@ function setupEditCustomerForm(): void {
             warrantyExpirationDate: raw.warrantyExpirationDate || null,
             notes: raw.notes ? [raw.notes] : []
         }
+
+        const dateError = validateCustomerDates(
+            data.contractSigningDate,
+            data.acceptanceSigningDate,
+            data.warrantyExpirationDate
+        )
+        if (dateError) {
+            alert(dateError)
+            return
+        }
+
         try {
             if (saveBtn) {
                 saveBtn.disabled = true
@@ -529,6 +580,12 @@ function setupAddContractForm(customerId: string): void {
         const data: any = Object.fromEntries(formData.entries())
         data.customerId = customerId
 
+        const dateError = validateContractDates(data.startDate, data.endDate)
+        if (dateError) {
+            alert(dateError)
+            return
+        }
+
         data.equipmentItems = Array.from(
             itemsList?.querySelectorAll('.equipment-item-row') ?? []
         ).map((row) => ({
@@ -608,6 +665,13 @@ function setupEditContractForm(customerId: string): void {
             numberOfStops: parseInt((row.querySelector('.eq-stops') as HTMLInputElement).value),
             quantity: parseInt((row.querySelector('.eq-qty') as HTMLInputElement).value)
         }))
+
+        const dateError = validateContractDates(raw.startDate, raw.endDate)
+        if (dateError) {
+            alert(dateError)
+            return
+        }
+
         try {
             if (saveBtn) {
                 saveBtn.disabled = true
