@@ -550,6 +550,58 @@ body {
     color: #fff;
 }
 
+.btn-edit {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 10px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: transparent;
+    border: 1.5px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+}
+
+.btn-edit:hover {
+    background: #f0f6ff;
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-delete {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 10px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: transparent;
+    border: 1.5px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+}
+
+.btn-delete:hover {
+    background: #fff0f0;
+    color: #ef4444;
+    border-color: #ef4444;
+}
+
+.row-actions {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+}
+
 .app-main {
     padding: 1.75rem 2rem 2rem;
 }

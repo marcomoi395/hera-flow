@@ -35,6 +35,7 @@ function renderListPage(): void {
     `
     loadCustomers()
     setupAddCustomerForm()
+    setupEditCustomerForm()
 }
 
 function setupAddCustomerForm(): void {
@@ -98,6 +99,81 @@ function setupAddCustomerForm(): void {
     }
 }
 
+function setupEditCustomerForm(): void {
+    const modal = document.getElementById('editCustomerModal')
+    const closeBtn = document.getElementById('closeEditCustomerModalBtn')
+    const cancelBtn = document.getElementById('cancelEditCustomerBtn')
+    const form = document.getElementById('editCustomerForm') as HTMLFormElement
+    const saveBtn = document.getElementById('saveEditCustomerBtn') as HTMLButtonElement
+
+    const closeModal = () => {
+        modal?.classList.remove('show')
+        form?.reset()
+    }
+
+    if (closeBtn) closeBtn.onclick = closeModal
+    if (cancelBtn) cancelBtn.onclick = closeModal
+    if (modal) {
+        modal.onclick = (e) => {
+            if (e.target === modal) closeModal()
+        }
+    }
+
+    form.onsubmit = async (e) => {
+        e.preventDefault()
+        const id = (document.getElementById('editCustomerId') as HTMLInputElement).value
+        const formData = new FormData(form)
+        const raw: any = Object.fromEntries(formData.entries())
+        const data: any = {
+            customerName: raw.customerName,
+            companyName: raw.companyName,
+            address: raw.address,
+            contractSigningDate: raw.contractSigningDate || null,
+            acceptanceSigningDate: raw.acceptanceSigningDate || null,
+            warrantyExpirationDate: raw.warrantyExpirationDate || null,
+            notes: raw.notes ? [raw.notes] : []
+        }
+        try {
+            if (saveBtn) {
+                saveBtn.disabled = true
+                saveBtn.innerText = 'Đang lưu...'
+            }
+            await window.api.updateCustomer(id, data)
+            closeModal()
+            loadCustomers()
+        } catch (error) {
+            console.error('Lỗi khi cập nhật khách hàng:', error)
+            alert('Có lỗi xảy ra khi cập nhật khách hàng!')
+        } finally {
+            if (saveBtn) {
+                saveBtn.disabled = false
+                saveBtn.innerText = 'Lưu Lại'
+            }
+        }
+    }
+}
+
+function openEditCustomerModal(customer: any): void {
+    const modal = document.getElementById('editCustomerModal')
+    const toDateInput = (d?: string | null) =>
+        d ? new Date(d).toISOString().split('T')[0] : ''
+    ;(document.getElementById('editCustomerId') as HTMLInputElement).value = customer._id
+    ;(document.getElementById('editCustomerName') as HTMLInputElement).value =
+        customer.customerName || ''
+    ;(document.getElementById('editCompanyName') as HTMLInputElement).value =
+        customer.companyName || ''
+    ;(document.getElementById('editAddress') as HTMLInputElement).value = customer.address || ''
+    ;(document.getElementById('editContractSigningDate') as HTMLInputElement).value =
+        toDateInput(customer.contractSigningDate)
+    ;(document.getElementById('editAcceptanceSigningDate') as HTMLInputElement).value =
+        toDateInput(customer.acceptanceSigningDate)
+    ;(document.getElementById('editWarrantyExpirationDate') as HTMLInputElement).value =
+        toDateInput(customer.warrantyExpirationDate)
+    ;(document.getElementById('editNotes') as HTMLTextAreaElement).value =
+        (customer.notes as string[])?.join(', ') || ''
+    modal?.classList.add('show')
+}
+
 async function loadCustomers(): Promise<void> {
     const loadingEl = document.getElementById('loading')
     const containerEl = document.getElementById('customersContainer')
@@ -143,6 +219,29 @@ async function loadCustomers(): Promise<void> {
                     renderDetailPage((btn as HTMLElement).dataset.customerId!)
                 })
             })
+            containerEl.querySelectorAll('[data-edit-customer-id]').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const id = (btn as HTMLElement).dataset.editCustomerId!
+                    const customer = customers.find((c: any) => c._id === id)
+                    if (customer) openEditCustomerModal(customer)
+                })
+            })
+            containerEl.querySelectorAll('[data-delete-customer-id]').forEach((btn) => {
+                btn.addEventListener('click', async () => {
+                    const id = (btn as HTMLElement).dataset.deleteCustomerId!
+                    const customer = customers.find((c: any) => c._id === id)
+                    const name = customer?.customerName ?? 'khách hàng này'
+                    if (!confirm(`Bạn có chắc muốn xóa "${name}"?\nHành động này không thể hoàn tác.`))
+                        return
+                    try {
+                        await window.api.deleteCustomer(id)
+                        loadCustomers()
+                    } catch (error) {
+                        console.error('Lỗi khi xóa khách hàng:', error)
+                        alert('Có lỗi xảy ra khi xóa khách hàng!')
+                    }
+                })
+            })
         }
     } catch (error) {
         console.error('Lỗi khi tải dữ liệu khách hàng:', error)
@@ -167,10 +266,18 @@ function renderCustomerRow(customer: any, index: number): string {
             <td class="col-center">${fmt(customer.warrantyExpirationDate)}</td>
             <td class="col-center">${notes}</td>
             <td class="col-action">
-                <button class="btn-detail" data-customer-id="${customer._id}">
-                    Chi tiết
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                </button>
+                <div class="row-actions">
+                    <button class="btn-edit" data-edit-customer-id="${customer._id}" title="Chỉnh sửa">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <button class="btn-delete" data-delete-customer-id="${customer._id}" title="Xóa">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                    </button>
+                    <button class="btn-detail" data-customer-id="${customer._id}">
+                        Chi tiết
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </button>
+                </div>
             </td>
         </tr>
     `
@@ -212,6 +319,7 @@ function renderDetailPage(customerId: string): void {
     document.getElementById('backBtn')!.addEventListener('click', renderListPage)
     loadCustomerDetail(customerId)
     setupAddContractForm(customerId)
+    setupEditContractForm(customerId)
 }
 
 async function loadCustomerDetail(customerId: string): Promise<void> {
@@ -274,6 +382,7 @@ async function loadCustomerDetail(customerId: string): Promise<void> {
                                 <th>Ngày bắt đầu</th>
                                 <th>Ngày kết thúc</th>
                                 <th>Nội dung</th>
+                                <th class="col-action"></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -283,6 +392,33 @@ async function loadCustomerDetail(customerId: string): Promise<void> {
                 }
             </div>
         `
+
+        container.querySelectorAll('[data-edit-contract]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const el = btn as HTMLElement
+                openEditContractModal({
+                    _id: el.dataset.editContract!,
+                    contractNumber: el.dataset.contractNumber!,
+                    startDate: el.dataset.startDate!,
+                    endDate: el.dataset.endDate!,
+                    equipmentItems: JSON.parse(el.dataset.equipmentItems || '[]')
+                })
+            })
+        })
+
+        container.querySelectorAll('[data-delete-contract]').forEach((btn) => {
+            btn.addEventListener('click', async () => {
+                const id = (btn as HTMLElement).dataset.deleteContract!
+                if (!confirm('Bạn có chắc muốn xóa hợp đồng này?')) return
+                try {
+                    await window.api.deleteMaintenanceContract(id)
+                    loadCustomerDetail(customerId)
+                } catch (error) {
+                    console.error('Lỗi khi xóa hợp đồng:', error)
+                    alert('Có lỗi xảy ra khi xóa hợp đồng!')
+                }
+            })
+        })
     } catch (error) {
         console.error('Lỗi khi tải thông tin khách hàng:', error)
         if (loadingEl) {
@@ -303,12 +439,31 @@ function renderContractRow(contract: any): string {
               )
               .join('')
         : '<span>—</span>'
+    const itemsJson = JSON.stringify(
+        items.map((e) => ({ weight: e.weight, numberOfStops: e.numberOfStops, quantity: e.quantity }))
+    ).replace(/"/g, '&quot;')
     return `
         <tr>
             <td>${contract.contractNumber || '—'}</td>
             <td>${fmt(contract.startDate)}</td>
             <td>${fmt(contract.endDate)}</td>
             <td class="elevator-items-cell">${itemsHtml}</td>
+            <td class="col-action">
+                <div class="row-actions">
+                    <button class="btn-edit"
+                        data-edit-contract="${contract._id}"
+                        data-contract-number="${contract.contractNumber || ''}"
+                        data-start-date="${contract.startDate || ''}"
+                        data-end-date="${contract.endDate || ''}"
+                        data-equipment-items="${itemsJson}"
+                        title="Chỉnh sửa">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <button class="btn-delete" data-delete-contract="${contract._id}" title="Xóa">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                    </button>
+                </div>
+            </td>
         </tr>
     `
 }
@@ -400,6 +555,115 @@ function setupAddContractForm(customerId: string): void {
             }
         }
     }
+}
+
+function setupEditContractForm(customerId: string): void {
+    const modal = document.getElementById('editContractModal')
+    const closeBtn = document.getElementById('closeEditContractModalBtn')
+    const cancelBtn = document.getElementById('cancelEditContractBtn')
+    const form = document.getElementById('editContractForm') as HTMLFormElement
+    const saveBtn = document.getElementById('saveEditContractBtn') as HTMLButtonElement
+    const addItemBtn = document.getElementById('editAddEquipmentItemBtn')
+    const itemsList = document.getElementById('editEquipmentItemsList')
+
+    function addEquipmentRow(weight = '', stops = '', qty = '1'): void {
+        const row = document.createElement('div')
+        row.className = 'equipment-item-row'
+        row.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:8px'
+        row.innerHTML = `
+            <input type="number" placeholder="Tải trọng (kg)" class="eq-weight" step="0.01" min="0" value="${weight}" required style="flex:2" />
+            <input type="number" placeholder="Số tầng dừng" class="eq-stops" min="1" value="${stops}" required style="flex:2" />
+            <input type="number" placeholder="Số lượng" class="eq-qty" min="1" value="${qty}" required style="flex:1" />
+            <button type="button" class="btn btn-secondary" style="padding:4px 8px">×</button>
+        `
+        row.querySelector('button')!.addEventListener('click', () => row.remove())
+        itemsList?.appendChild(row)
+    }
+
+    if (addItemBtn) addItemBtn.onclick = () => addEquipmentRow()
+
+    const closeModal = () => {
+        modal?.classList.remove('show')
+        form?.reset()
+        if (itemsList) itemsList.innerHTML = ''
+    }
+
+    if (closeBtn) closeBtn.onclick = closeModal
+    if (cancelBtn) cancelBtn.onclick = closeModal
+    if (modal) {
+        modal.onclick = (e) => {
+            if (e.target === modal) closeModal()
+        }
+    }
+
+    form.onsubmit = async (e) => {
+        e.preventDefault()
+        const id = (document.getElementById('editContractId') as HTMLInputElement).value
+        const formData = new FormData(form)
+        const raw: any = Object.fromEntries(formData.entries())
+        const equipmentItems = Array.from(
+            itemsList?.querySelectorAll('.equipment-item-row') ?? []
+        ).map((row) => ({
+            weight: parseFloat((row.querySelector('.eq-weight') as HTMLInputElement).value),
+            numberOfStops: parseInt((row.querySelector('.eq-stops') as HTMLInputElement).value),
+            quantity: parseInt((row.querySelector('.eq-qty') as HTMLInputElement).value)
+        }))
+        try {
+            if (saveBtn) {
+                saveBtn.disabled = true
+                saveBtn.innerText = 'Đang lưu...'
+            }
+            await window.api.updateMaintenanceContract(id, {
+                contractNumber: raw.contractNumber,
+                startDate: raw.startDate,
+                endDate: raw.endDate,
+                equipmentItems
+            })
+            closeModal()
+            loadCustomerDetail(customerId)
+        } catch (error: any) {
+            console.error('Lỗi khi cập nhật hợp đồng:', error)
+            alert(error?.message || 'Có lỗi xảy ra khi cập nhật hợp đồng!')
+        } finally {
+            if (saveBtn) {
+                saveBtn.disabled = false
+                saveBtn.innerText = 'Lưu Lại'
+            }
+        }
+    }
+}
+
+function openEditContractModal(contract: any): void {
+    const modal = document.getElementById('editContractModal')
+    const itemsList = document.getElementById('editEquipmentItemsList')
+    if (itemsList) itemsList.innerHTML = ''
+
+    const toDateInput = (d?: string) => (d ? new Date(d).toISOString().split('T')[0] : '')
+    ;(document.getElementById('editContractId') as HTMLInputElement).value = contract._id
+    ;(document.getElementById('editContractNumber') as HTMLInputElement).value =
+        contract.contractNumber || ''
+    ;(document.getElementById('editStartDate') as HTMLInputElement).value = toDateInput(
+        contract.startDate
+    )
+    ;(document.getElementById('editEndDate') as HTMLInputElement).value = toDateInput(
+        contract.endDate
+    )
+
+    for (const item of contract.equipmentItems || []) {
+        const row = document.createElement('div')
+        row.className = 'equipment-item-row'
+        row.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:8px'
+        row.innerHTML = `
+            <input type="number" placeholder="Tải trọng (kg)" class="eq-weight" step="0.01" min="0" value="${item.weight}" required style="flex:2" />
+            <input type="number" placeholder="Số tầng dừng" class="eq-stops" min="1" value="${item.numberOfStops}" required style="flex:2" />
+            <input type="number" placeholder="Số lượng" class="eq-qty" min="1" value="${item.quantity}" required style="flex:1" />
+            <button type="button" class="btn btn-secondary" style="padding:4px 8px">×</button>
+        `
+        row.querySelector('button')!.addEventListener('click', () => row.remove())
+        itemsList?.appendChild(row)
+    }
+
+    modal?.classList.add('show')
 }
 
 init()
