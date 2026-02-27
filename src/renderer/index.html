@@ -302,5 +302,135 @@
                 </div>
             </div>
         </div>
+
+        <!-- Add Warranty History Modal -->
+        <div id="addWarrantyHistoryModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Thêm Lịch Sử Bảo Hành / Bảo Trì</h2>
+                    <button class="close-btn" id="closeAddWarrantyHistoryModalBtn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="addWarrantyHistoryForm">
+                        <div class="form-section">
+                            <div class="form-group-row">
+                                <div class="form-group">
+                                    <label for="whSequenceNumber">STT <span class="required">*</span></label>
+                                    <input type="number" id="whSequenceNumber" name="sequenceNumber" min="1" required />
+                                </div>
+                                <div class="form-group">
+                                    <label for="whDate">Ngày <span class="required">*</span></label>
+                                    <input type="date" id="whDate" name="date" required />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="whTaskType">Loại công tác <span class="required">*</span></label>
+                                <select id="whTaskType" name="taskType" required>
+                                    <option value="maintenance">Bảo trì</option>
+                                    <option value="warranty">Bảo hành</option>
+                                    <option value="customer requested repair">Khách hàng y/c sửa chữa</option>
+                                    <option value="company requested repair">Cty y/c sửa chữa</option>
+                                    <option value="other">Khác</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Nội dung</label>
+                                <div id="whContentsList"></div>
+                                <button type="button" class="btn btn-secondary" id="addWhContentBtn" style="margin-top: 8px">+ Thêm nội dung</button>
+                            </div>
+                            <div class="form-group">
+                                <label for="whNotes">Ghi chú</label>
+                                <textarea id="whNotes" name="notes" rows="2"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" id="cancelAddWarrantyHistoryBtn">Bỏ Qua</button>
+                            <button type="submit" class="btn btn-primary" id="saveWarrantyHistoryBtn">Lưu Lại</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Warranty History Modal -->
+        <div id="editWarrantyHistoryModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Chỉnh Sửa Lịch Sử Bảo Hành / Bảo Trì</h2>
+                    <button class="close-btn" id="closeEditWarrantyHistoryModalBtn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="editWarrantyHistoryForm">
+                        <input type="hidden" id="editWarrantyHistoryId" />
+                        <div class="form-section">
+                            <div class="form-group-row">
+                                <div class="form-group">
+                                    <label for="editWhSequenceNumber">STT <span class="required">*</span></label>
+                                    <input type="number" id="editWhSequenceNumber" name="sequenceNumber" min="1" required />
+                                </div>
+                                <div class="form-group">
+                                    <label for="editWhDate">Ngày <span class="required">*</span></label>
+                                    <input type="date" id="editWhDate" name="date" required />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="editWhTaskType">Loại công tác <span class="required">*</span></label>
+                                <select id="editWhTaskType" name="taskType" required>
+                                    <option value="maintenance">Bảo trì</option>
+                                    <option value="warranty">Bảo hành</option>
+                                    <option value="customer requested repair">Khách hàng y/c sửa chữa</option>
+                                    <option value="company requested repair">Cty y/c sửa chữa</option>
+                                    <option value="other">Khác</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Nội dung</label>
+                                <div id="editWhContentsList"></div>
+                                <button type="button" class="btn btn-secondary" id="editAddWhContentBtn" style="margin-top: 8px">+ Thêm nội dung</button>
+                            </div>
+                            <div class="form-group">
+                                <label for="editWhNotes">Ghi chú</label>
+                                <textarea id="editWhNotes" name="notes" rows="2"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" id="cancelEditWarrantyHistoryBtn">Bỏ Qua</button>
+                            <button type="submit" class="btn btn-primary" id="saveEditWarrantyHistoryBtn">Lưu Lại</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Maintenance Report Modal -->
+        <div id="maintenanceReportModal" class="modal">
+            <div class="modal-content modal-content--wide">
+                <div class="modal-header">
+                    <h2>Tạo Phiếu Bảo Trì</h2>
+                    <button class="close-btn" id="closeMaintenanceReportModalBtn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div id="maintenanceReportLoading" class="loading-spinner">Đang tải danh sách...</div>
+                    <div id="maintenanceReportContent" style="display:none">
+                        <p class="form-hint">Chọn khách hàng cần tạo phiếu bảo trì trong tháng này:</p>
+                        <div class="form-group" style="margin-bottom:12px; max-width:220px">
+                            <label for="reportVisitDate" style="font-size:0.875rem; font-weight:500">Ngày công tác <span class="required">*</span></label>
+                            <input type="date" id="reportVisitDate" style="margin-top:4px" />
+                        </div>
+                        <div id="maintenanceReportList"></div>
+                        <div class="form-actions" style="margin-top:16px">
+                            <button type="button" class="btn btn-secondary" id="cancelMaintenanceReportBtn">Hủy</button>
+                            <button type="button" class="btn btn-primary" id="generateReportBtn">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                Tạo File
+                            </button>
+                        </div>
+                    </div>
+                    <div id="maintenanceReportEmpty" style="display:none" class="empty-state">
+                        Không có khách hàng nào có hợp đồng bảo trì còn hiệu lực trong tháng này.
+                    </div>
+                </div>
+            </div>
+        </div>
     </body>
 </html>

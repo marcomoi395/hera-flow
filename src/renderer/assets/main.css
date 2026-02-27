@@ -599,6 +599,39 @@ body {
     animation: slideIn 0.3s ease-out;
 }
 
+.modal-content--wide {
+    max-width: 900px;
+}
+
+.form-hint {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+}
+
+.candidate-congtac {
+    font-family: inherit;
+    font-size: 0.8rem;
+    padding: 0.25rem 0.4rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--card-bg);
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+.btn-header-action--secondary {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.btn-header-action--secondary:hover {
+    background: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.4);
+    color: #fff;
+}
+
 @keyframes slideIn {
     from {
         transform: translateY(-30px);
@@ -771,6 +804,16 @@ body {
 
 .elevator-items-cell {
     vertical-align: middle;
+}
+
+.warranty-contents-cell {
+    vertical-align: middle;
+    max-width: 360px;
+}
+
+.warranty-contents-cell .elevator-item {
+    background: #64748b;
+    font-size: 0.7rem;
 }
 
 .elevator-item {

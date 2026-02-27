@@ -93,6 +93,10 @@ function renderListPage(): void {
                 </div>
             </div>
             <div class="header-actions">
+                <button class="btn-header-action btn-header-action--secondary" id="openMaintenanceReportModalBtn">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                    Tạo File Bảo Trì
+                </button>
                 <button class="btn-header-action" id="openAddCustomerModalBtn">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                     Thêm Khách Hàng
@@ -120,6 +124,7 @@ function renderListPage(): void {
     setupAddCustomerForm()
     setupEditCustomerForm()
     setupFilterBar()
+    setupMaintenanceReportModal()
 }
 
 function setupFilterBar(): void {
@@ -138,6 +143,234 @@ function setupFilterBar(): void {
             renderFilteredTable()
         })
     }
+}
+
+// ─── MAINTENANCE REPORT MODAL ─────────────────────────────────────────────────
+
+const CONG_TAC_OPTIONS = [
+    { value: 'baotri', label: 'Bảo trì' },
+    { value: 'baohanh', label: 'Bảo hành' },
+    { value: 'khac', label: 'Khác' },
+    { value: 'kh_yc', label: 'Khách hàng y/c sửa chữa' },
+    { value: 'cty_yc', label: 'Cty y/c sửa chữa' }
+]
+
+const DEFAULT_MAINTENANCE_CONTENTS = [
+    'Kiểm tra máy kéo',
+    'Vệ sinh nóc car',
+    'Kiểm tra tủ điện',
+    'Kiểm tra đầu cửa car',
+    'Vệ sinh phòng máy',
+    'Kiểm tra hệ thống thông gió',
+    'Kiểm tra cáp',
+    'Kiểm tra hệ thống chiếu sáng',
+    'Kiểm tra nhớt bôi trơn rail dẫn hướng',
+    'Vệ sinh trần car',
+    'Kiểm tra hệ thống điều khiển bên ngoài',
+    'Vệ sinh sill và Cabin thang máy',
+    'Vệ sinh sill cửa tầng và cửa tầng',
+    'Kiểm tra và vệ sinh pít hố thang'
+]
+
+function setupMaintenanceReportModal(): void {
+    const modal = document.getElementById('maintenanceReportModal')!
+    const openBtn = document.getElementById('openMaintenanceReportModalBtn')
+
+    if (modal.dataset.initialized) {
+        openBtn?.addEventListener('click', () => modal.classList.add('show'))
+        return
+    }
+    modal.dataset.initialized = 'true'
+
+    const closeBtn = document.getElementById('closeMaintenanceReportModalBtn')!
+    const cancelBtn = document.getElementById('cancelMaintenanceReportBtn')!
+    const generateBtn = document.getElementById('generateReportBtn')!
+
+    const openModal = async () => {
+        modal.classList.add('show')
+        // Default visit date to today
+        const dateInput = document.getElementById('reportVisitDate') as HTMLInputElement
+        if (dateInput && !dateInput.value) {
+            dateInput.value = new Date().toISOString().split('T')[0]
+        }
+        const loadingEl = document.getElementById('maintenanceReportLoading')!
+        const contentEl = document.getElementById('maintenanceReportContent')!
+        const emptyEl = document.getElementById('maintenanceReportEmpty')!
+        loadingEl.style.display = ''
+        contentEl.style.display = 'none'
+        emptyEl.style.display = 'none'
+
+        try {
+            const candidates = await window.api.getMaintenanceReportCandidates()
+            loadingEl.style.display = 'none'
+
+            if (candidates.length === 0) {
+                emptyEl.style.display = ''
+                return
+            }
+
+            const fmt = (d?: string | null) => (d ? new Date(d).toLocaleDateString('vi-VN') : '—')
+
+            const contentsSubRow = (i: number, lastContents: string[] | null) => `
+                <tr class="candidate-contents-row" id="candidate-contents-${i}" style="display:none">
+                    <td colspan="7" style="padding:0 8px 8px 36px; background:var(--bg-secondary,#f9fafb)">
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:2px 16px; padding:6px 0">
+                            ${DEFAULT_MAINTENANCE_CONTENTS.map(
+                                (item, j) => `
+                            <label style="display:flex; align-items:center; gap:6px; font-size:0.8rem; cursor:pointer">
+                                <input type="checkbox" class="maintenance-content-check" data-candidate-idx="${i}" data-content-idx="${j}" ${lastContents === null || lastContents.includes(item) ? 'checked' : ''} />
+                                ${item}
+                            </label>`
+                            ).join('')}
+                        </div>
+                    </td>
+                </tr>`
+
+            const listEl = document.getElementById('maintenanceReportList')!
+            listEl.innerHTML = `
+                <table class="customers-table">
+                    <thead>
+                        <tr>
+                            <th class="col-no" style="width:36px">
+                                <input type="checkbox" id="selectAllCandidates" title="Chọn tất cả" />
+                            </th>
+                            <th>Khách hàng</th>
+                            <th>Công ty</th>
+                            <th class="col-center">Số HĐ</th>
+                            <th class="col-center">Hiệu lực đến</th>
+                            <th>Công tác</th>
+                            <th style="width:36px"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${candidates
+                            .map(
+                                (c: any, i: number) => `
+                        <tr data-candidate-idx="${i}">
+                            <td><input type="checkbox" class="candidate-check" data-idx="${i}" /></td>
+                            <td>${c.customerName}</td>
+                            <td>${c.companyName || '—'}</td>
+                            <td class="col-center">${c.contractNumber || '—'}</td>
+                            <td class="col-center">${fmt(c.endDate)}</td>
+                            <td>
+                                <select class="candidate-congtac" data-idx="${i}">
+                                    ${CONG_TAC_OPTIONS.map(
+                                        (opt) =>
+                                            `<option value="${opt.value}"${opt.value === 'baotri' ? ' selected' : ''}>${opt.label}</option>`
+                                    ).join('')}
+                                </select>
+                            </td>
+                            <td>
+                                <button type="button" class="btn-toggle-contents" data-idx="${i}" title="Nội dung bảo trì" style="background:none; border:none; cursor:pointer; padding:2px 4px; font-size:1rem; color:var(--text-secondary,#6b7280)">▾</button>
+                            </td>
+                        </tr>
+                        ${contentsSubRow(i, c.lastMaintenanceContents ?? null)}
+                        `
+                            )
+                            .join('')}
+                    </tbody>
+                </table>
+            `
+
+            // Store candidates data on the element for use in generate
+            listEl.dataset.candidates = JSON.stringify(candidates)
+
+            // Select all checkbox
+            document.getElementById('selectAllCandidates')?.addEventListener('change', (e) => {
+                const checked = (e.target as HTMLInputElement).checked
+                document.querySelectorAll('.candidate-check').forEach((cb) => {
+                    ;(cb as HTMLInputElement).checked = checked
+                })
+            })
+
+            // Toggle per-candidate contents sub-row
+            document.querySelectorAll('.btn-toggle-contents').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const idx = (btn as HTMLElement).dataset.idx
+                    const subRow = document.getElementById(`candidate-contents-${idx}`)
+                    if (!subRow) return
+                    const isHidden = subRow.style.display === 'none'
+                    subRow.style.display = isHidden ? '' : 'none'
+                    ;(btn as HTMLElement).textContent = isHidden ? '▴' : '▾'
+                })
+            })
+
+            contentEl.style.display = ''
+        } catch (err) {
+            console.error('Error loading candidates:', err)
+            loadingEl.textContent = 'Lỗi tải dữ liệu.'
+        }
+    }
+
+    const closeModal = () => modal.classList.remove('show')
+
+    openBtn?.addEventListener('click', openModal)
+    closeBtn.addEventListener('click', closeModal)
+    cancelBtn.addEventListener('click', closeModal)
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal()
+    })
+
+    generateBtn.addEventListener('click', async () => {
+        const listEl = document.getElementById('maintenanceReportList')!
+        const candidatesRaw = listEl.dataset.candidates
+        if (!candidatesRaw) return
+
+        const candidates = JSON.parse(candidatesRaw)
+        const checked = document.querySelectorAll('.candidate-check:checked')
+        if (checked.length === 0) {
+            alert('Vui lòng chọn ít nhất một khách hàng.')
+            return
+        }
+
+        const visitDate = (document.getElementById('reportVisitDate') as HTMLInputElement)?.value
+        if (!visitDate) {
+            alert('Vui lòng chọn ngày công tác.')
+            return
+        }
+
+        const requests: any[] = []
+        checked.forEach((cb) => {
+            const idx = parseInt((cb as HTMLElement).dataset.idx ?? '0')
+            const candidate = candidates[idx]
+            const congTacEl = document.querySelector(
+                `.candidate-congtac[data-idx="${idx}"]`
+            ) as HTMLSelectElement | null
+            const maintenanceContents = DEFAULT_MAINTENANCE_CONTENTS.filter((_, j) => {
+                const contentCb = document.querySelector(
+                    `.maintenance-content-check[data-candidate-idx="${idx}"][data-content-idx="${j}"]`
+                ) as HTMLInputElement | null
+                return contentCb?.checked ?? true
+            })
+            requests.push({
+                customerId: candidate.customerId,
+                contractId: candidate.contractId,
+                congTac: congTacEl?.value ?? 'baotri',
+                visitDate,
+                maintenanceContents
+            })
+        })
+
+        generateBtn.setAttribute('disabled', 'true')
+        generateBtn.textContent = 'Đang tạo...'
+
+        try {
+            const result = await window.api.generateMaintenanceReports(requests)
+            if (result.canceled) {
+                generateBtn.removeAttribute('disabled')
+                generateBtn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Tạo File`
+                return
+            }
+            alert(`Đã tạo ${result.files.length} file thành công!`)
+            closeModal()
+        } catch (err) {
+            console.error('Error generating reports:', err)
+            alert('Lỗi khi tạo file. Vui lòng thử lại.')
+        } finally {
+            generateBtn.removeAttribute('disabled')
+            generateBtn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Tạo File`
+        }
+    })
 }
 
 function getWarrantyStatus(customer: any): 'active' | 'expiring' | 'expired' | 'none' {
@@ -173,8 +406,7 @@ function renderFilteredTable(): void {
     const filtered = applyFilter(allCustomers)
 
     if (filtered.length === 0) {
-        containerEl.innerHTML =
-            '<div class="empty-state">Không tìm thấy khách hàng phù hợp.</div>'
+        containerEl.innerHTML = '<div class="empty-state">Không tìm thấy khách hàng phù hợp.</div>'
         return
     }
 
@@ -366,18 +598,19 @@ function setupEditCustomerForm(): void {
 
 function openEditCustomerModal(customer: any): void {
     const modal = document.getElementById('editCustomerModal')
-    const toDateInput = (d?: string | null) =>
-        d ? new Date(d).toISOString().split('T')[0] : ''
+    const toDateInput = (d?: string | null) => (d ? new Date(d).toISOString().split('T')[0] : '')
     ;(document.getElementById('editCustomerId') as HTMLInputElement).value = customer._id
     ;(document.getElementById('editCustomerName') as HTMLInputElement).value =
         customer.customerName || ''
     ;(document.getElementById('editCompanyName') as HTMLInputElement).value =
         customer.companyName || ''
     ;(document.getElementById('editAddress') as HTMLInputElement).value = customer.address || ''
-    ;(document.getElementById('editContractSigningDate') as HTMLInputElement).value =
-        toDateInput(customer.contractSigningDate)
-    ;(document.getElementById('editAcceptanceSigningDate') as HTMLInputElement).value =
-        toDateInput(customer.acceptanceSigningDate)
+    ;(document.getElementById('editContractSigningDate') as HTMLInputElement).value = toDateInput(
+        customer.contractSigningDate
+    )
+    ;(document.getElementById('editAcceptanceSigningDate') as HTMLInputElement).value = toDateInput(
+        customer.acceptanceSigningDate
+    )
     ;(document.getElementById('editWarrantyExpirationDate') as HTMLInputElement).value =
         toDateInput(customer.warrantyExpirationDate)
     ;(document.getElementById('editNotes') as HTMLTextAreaElement).value =
@@ -481,6 +714,10 @@ function renderDetailPage(customerId: string): void {
                 </button>
             </div>
             <div class="header-actions">
+                <button class="btn-header-action" id="openAddWarrantyHistoryModalBtn">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Lịch Sử Mới
+                </button>
                 <button class="btn-header-action" id="openAddContractModalBtn">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                     Hợp Đồng Mới
@@ -496,6 +733,8 @@ function renderDetailPage(customerId: string): void {
     loadCustomerDetail(customerId)
     setupAddContractForm(customerId)
     setupEditContractForm(customerId)
+    setupAddWarrantyHistoryForm(customerId)
+    setupEditWarrantyHistoryForm(customerId)
 }
 
 async function loadCustomerDetail(customerId: string): Promise<void> {
@@ -514,6 +753,15 @@ async function loadCustomerDetail(customerId: string): Promise<void> {
 
         const fmt = (d?: string | null) => (d ? new Date(d).toLocaleDateString('vi-VN') : '—')
         const contracts = (customer.maintenanceContracts as any[]) || []
+        const warrantyHistory = (customer.warrantyHistory as any[]) || []
+
+        const taskTypeLabel: Record<string, string> = {
+            maintenance: 'Bảo trì',
+            warranty: 'Bảo hành',
+            other: 'Khác',
+            'customer requested repair': 'Khách hàng y/c sửa chữa',
+            'company requested repair': 'Cty y/c sửa chữa'
+        }
 
         container.innerHTML = `
             <div class="detail-card">
@@ -567,6 +815,56 @@ async function loadCustomerDetail(customerId: string): Promise<void> {
                     </table>`
                 }
             </div>
+
+            <div class="detail-section">
+                <h3 class="section-title">Lịch Sử Bảo Hành / Bảo Trì</h3>
+                ${
+                    warrantyHistory.length === 0
+                        ? '<div class="empty-state">Chưa có lịch sử bảo hành / bảo trì nào.</div>'
+                        : `<table class="customers-table">
+                        <thead>
+                            <tr>
+                                <th class="col-no">STT</th>
+                                <th class="col-center">Ngày</th>
+                                <th>Loại công tác</th>
+                                <th>Ghi chú</th>
+                                <th class="col-action"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${[...warrantyHistory]
+                                .sort(
+                                    (a, b) =>
+                                        new Date(b.date).getTime() - new Date(a.date).getTime()
+                                )
+                                .map(
+                                    (h: any) => `
+                            <tr>
+                                <td class="col-no">${h.sequenceNumber}</td>
+                                <td class="col-center">${fmt(h.date)}</td>
+                                <td>${taskTypeLabel[h.taskType] ?? h.taskType}</td>
+                                <td>${h.notes || '—'}</td>
+                                <td class="col-action">
+                                    <button class="btn-edit" data-edit-warranty="${h._id}"
+                                        data-seq="${h.sequenceNumber}"
+                                        data-date="${h.date}"
+                                        data-task-type="${h.taskType}"
+                                        data-contents="${encodeURIComponent(JSON.stringify(h.maintenanceContents || []))}"
+                                        data-notes="${encodeURIComponent(h.notes || '')}"
+                                        title="Sửa">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                    </button>
+                                    <button class="btn-delete" data-delete-warranty="${h._id}" title="Xóa">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                    </button>
+                                </td>
+                            </tr>`
+                                )
+                                .join('')}
+                        </tbody>
+                    </table>`
+                }
+            </div>
         `
 
         container.querySelectorAll('[data-edit-contract]').forEach((btn) => {
@@ -595,6 +893,34 @@ async function loadCustomerDetail(customerId: string): Promise<void> {
                 }
             })
         })
+
+        container.querySelectorAll('[data-delete-warranty]').forEach((btn) => {
+            btn.addEventListener('click', async () => {
+                const id = (btn as HTMLElement).dataset.deleteWarranty!
+                if (!confirm('Bạn có chắc muốn xóa mục lịch sử này?')) return
+                try {
+                    await window.api.deleteWarrantyHistory(id)
+                    loadCustomerDetail(customerId)
+                } catch (error) {
+                    console.error('Lỗi khi xóa lịch sử:', error)
+                    alert('Có lỗi xảy ra khi xóa!')
+                }
+            })
+        })
+
+        container.querySelectorAll('[data-edit-warranty]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const el = btn as HTMLElement
+                openEditWarrantyHistoryModal({
+                    _id: el.dataset.editWarranty!,
+                    sequenceNumber: el.dataset.seq!,
+                    date: el.dataset.date!,
+                    taskType: el.dataset.taskType!,
+                    maintenanceContents: JSON.parse(decodeURIComponent(el.dataset.contents || '[]')),
+                    notes: decodeURIComponent(el.dataset.notes || '')
+                })
+            })
+        })
     } catch (error) {
         console.error('Lỗi khi tải thông tin khách hàng:', error)
         if (loadingEl) {
@@ -616,7 +942,11 @@ function renderContractRow(contract: any): string {
               .join('')
         : '<span>—</span>'
     const itemsJson = JSON.stringify(
-        items.map((e) => ({ weight: e.weight, numberOfStops: e.numberOfStops, quantity: e.quantity }))
+        items.map((e) => ({
+            weight: e.weight,
+            numberOfStops: e.numberOfStops,
+            quantity: e.quantity
+        }))
     ).replace(/"/g, '&quot;')
     return `
         <tr>
@@ -855,6 +1185,187 @@ function openEditContractModal(contract: any): void {
     modal?.classList.add('show')
 }
 
+// ─── WARRANTY HISTORY FORMS ───────────────────────────────────────────────────
+
+function setupAddWarrantyHistoryForm(customerId: string): void {
+    const modal = document.getElementById('addWarrantyHistoryModal')
+    const openBtn = document.getElementById('openAddWarrantyHistoryModalBtn')
+    const closeBtn = document.getElementById('closeAddWarrantyHistoryModalBtn')
+    const cancelBtn = document.getElementById('cancelAddWarrantyHistoryBtn')
+    const form = document.getElementById('addWarrantyHistoryForm') as HTMLFormElement
+    const saveBtn = document.getElementById('saveWarrantyHistoryBtn') as HTMLButtonElement
+    const addContentBtn = document.getElementById('addWhContentBtn')
+    const contentsList = document.getElementById('whContentsList')
+
+    function addContentRow(value = ''): void {
+        const row = document.createElement('div')
+        row.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:8px'
+        row.innerHTML = `
+            <input type="text" placeholder="Nội dung..." class="wh-content-input" value="${value}" style="flex:1" />
+            <button type="button" class="btn btn-secondary" style="padding:4px 8px">×</button>
+        `
+        row.querySelector('button')!.addEventListener('click', () => row.remove())
+        contentsList?.appendChild(row)
+    }
+
+    if (addContentBtn) addContentBtn.onclick = () => addContentRow()
+
+    const openModal = () => {
+        if (contentsList) contentsList.innerHTML = ''
+        modal?.classList.add('show')
+    }
+    const closeModal = () => {
+        modal?.classList.remove('show')
+        form?.reset()
+        if (contentsList) contentsList.innerHTML = ''
+    }
+
+    if (openBtn) openBtn.onclick = openModal
+    if (closeBtn) closeBtn.onclick = closeModal
+    if (cancelBtn) cancelBtn.onclick = closeModal
+    if (modal) {
+        modal.onclick = (e) => {
+            if (e.target === modal) closeModal()
+        }
+    }
+
+    form.onsubmit = async (e) => {
+        e.preventDefault()
+        const formData = new FormData(form)
+        const raw: any = Object.fromEntries(formData.entries())
+        const maintenanceContents = Array.from(
+            contentsList?.querySelectorAll('.wh-content-input') ?? []
+        )
+            .map((el) => (el as HTMLInputElement).value.trim())
+            .filter(Boolean)
+
+        try {
+            if (saveBtn) {
+                saveBtn.disabled = true
+                saveBtn.innerText = 'Đang lưu...'
+            }
+            await window.api.createWarrantyHistory({
+                customerId,
+                sequenceNumber: parseInt(raw.sequenceNumber),
+                date: raw.date,
+                taskType: raw.taskType,
+                maintenanceContents,
+                notes: raw.notes || ''
+            })
+            closeModal()
+            loadCustomerDetail(customerId)
+        } catch (error: any) {
+            console.error('Lỗi khi tạo lịch sử:', error)
+            alert(error?.message || 'Có lỗi xảy ra khi tạo lịch sử!')
+        } finally {
+            if (saveBtn) {
+                saveBtn.disabled = false
+                saveBtn.innerText = 'Lưu Lại'
+            }
+        }
+    }
+}
+
+function setupEditWarrantyHistoryForm(customerId: string): void {
+    const modal = document.getElementById('editWarrantyHistoryModal')
+    const closeBtn = document.getElementById('closeEditWarrantyHistoryModalBtn')
+    const cancelBtn = document.getElementById('cancelEditWarrantyHistoryBtn')
+    const form = document.getElementById('editWarrantyHistoryForm') as HTMLFormElement
+    const saveBtn = document.getElementById('saveEditWarrantyHistoryBtn') as HTMLButtonElement
+    const addContentBtn = document.getElementById('editAddWhContentBtn')
+    const contentsList = document.getElementById('editWhContentsList')
+
+    function addContentRow(value = ''): void {
+        const row = document.createElement('div')
+        row.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:8px'
+        row.innerHTML = `
+            <input type="text" placeholder="Nội dung..." class="wh-content-input" value="${value}" style="flex:1" />
+            <button type="button" class="btn btn-secondary" style="padding:4px 8px">×</button>
+        `
+        row.querySelector('button')!.addEventListener('click', () => row.remove())
+        contentsList?.appendChild(row)
+    }
+
+    if (addContentBtn) addContentBtn.onclick = () => addContentRow()
+
+    const closeModal = () => {
+        modal?.classList.remove('show')
+        form?.reset()
+        if (contentsList) contentsList.innerHTML = ''
+    }
+
+    if (closeBtn) closeBtn.onclick = closeModal
+    if (cancelBtn) cancelBtn.onclick = closeModal
+    if (modal) {
+        modal.onclick = (e) => {
+            if (e.target === modal) closeModal()
+        }
+    }
+
+    form.onsubmit = async (e) => {
+        e.preventDefault()
+        const id = (document.getElementById('editWarrantyHistoryId') as HTMLInputElement).value
+        const formData = new FormData(form)
+        const raw: any = Object.fromEntries(formData.entries())
+        const maintenanceContents = Array.from(
+            contentsList?.querySelectorAll('.wh-content-input') ?? []
+        )
+            .map((el) => (el as HTMLInputElement).value.trim())
+            .filter(Boolean)
+
+        try {
+            if (saveBtn) {
+                saveBtn.disabled = true
+                saveBtn.innerText = 'Đang lưu...'
+            }
+            await window.api.updateWarrantyHistory(id, {
+                sequenceNumber: parseInt(raw.sequenceNumber),
+                date: raw.date,
+                taskType: raw.taskType,
+                maintenanceContents,
+                notes: raw.notes || ''
+            })
+            closeModal()
+            loadCustomerDetail(customerId)
+        } catch (error: any) {
+            console.error('Lỗi khi cập nhật lịch sử:', error)
+            alert(error?.message || 'Có lỗi xảy ra khi cập nhật lịch sử!')
+        } finally {
+            if (saveBtn) {
+                saveBtn.disabled = false
+                saveBtn.innerText = 'Lưu Lại'
+            }
+        }
+    }
+}
+
+function openEditWarrantyHistoryModal(entry: any): void {
+    const modal = document.getElementById('editWarrantyHistoryModal')
+    const contentsList = document.getElementById('editWhContentsList')
+    if (contentsList) contentsList.innerHTML = ''
+
+    const toDateInput = (d?: string) => (d ? new Date(d).toISOString().split('T')[0] : '')
+    ;(document.getElementById('editWarrantyHistoryId') as HTMLInputElement).value = entry._id
+    ;(document.getElementById('editWhSequenceNumber') as HTMLInputElement).value =
+        entry.sequenceNumber
+    ;(document.getElementById('editWhDate') as HTMLInputElement).value = toDateInput(entry.date)
+    ;(document.getElementById('editWhTaskType') as HTMLSelectElement).value = entry.taskType
+    ;(document.getElementById('editWhNotes') as HTMLTextAreaElement).value = entry.notes || ''
+
+    for (const content of entry.maintenanceContents || []) {
+        const row = document.createElement('div')
+        row.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:8px'
+        row.innerHTML = `
+            <input type="text" placeholder="Nội dung..." class="wh-content-input" value="${content}" style="flex:1" />
+            <button type="button" class="btn btn-secondary" style="padding:4px 8px">×</button>
+        `
+        row.querySelector('button')!.addEventListener('click', () => row.remove())
+        contentsList?.appendChild(row)
+    }
+
+    modal?.classList.add('show')
+}
+
 // ─── TRASH PAGE ───────────────────────────────────────────────────────────────
 
 async function renderTrashPage(): Promise<void> {
@@ -888,7 +1399,11 @@ async function renderTrashPage(): Promise<void> {
         </main>
     `
     document.getElementById('emptyTrashBtn')!.addEventListener('click', async () => {
-        if (!confirm('Xóa vĩnh viễn tất cả các mục trong thùng rác? Hành động này không thể hoàn tác.'))
+        if (
+            !confirm(
+                'Xóa vĩnh viễn tất cả các mục trong thùng rác? Hành động này không thể hoàn tác.'
+            )
+        )
             return
         try {
             await window.api.trashEmpty()
@@ -914,8 +1429,9 @@ async function loadTrashData(): Promise<void> {
         if (loadingEl) loadingEl.style.display = 'none'
 
         const emptyTrashBtn = document.getElementById('emptyTrashBtn') as HTMLButtonElement | null
-        if (emptyTrashBtn) emptyTrashBtn.style.display =
-            customers.length === 0 && contracts.length === 0 ? 'none' : ''
+        if (emptyTrashBtn)
+            emptyTrashBtn.style.display =
+                customers.length === 0 && contracts.length === 0 ? 'none' : ''
 
         if (customers.length === 0 && contracts.length === 0) {
             container.innerHTML = `
@@ -940,14 +1456,18 @@ async function loadTrashData(): Promise<void> {
         const iconDelete = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`
 
         container.innerHTML = `
-            ${customers.length > 0 ? `
+            ${
+                customers.length > 0
+                    ? `
             <div class="trash-section">
                 <div class="trash-section-header">
                     <span class="trash-section-title">Khách hàng</span>
                     <span class="trash-count">${customers.length}</span>
                 </div>
                 <div class="trash-grid">
-                    ${customers.map((c: any) => `
+                    ${customers
+                        .map(
+                            (c: any) => `
                     <div class="trash-card trash-card--customer">
                         <div class="trash-card-header">
                             <div class="trash-card-icon trash-card-icon--person">${iconPerson}</div>
@@ -971,18 +1491,26 @@ async function loadTrashData(): Promise<void> {
                             </button>
                         </div>
                     </div>
-                    `).join('')}
+                    `
+                        )
+                        .join('')}
                 </div>
-            </div>` : ''}
+            </div>`
+                    : ''
+            }
 
-            ${contracts.length > 0 ? `
+            ${
+                contracts.length > 0
+                    ? `
             <div class="trash-section">
                 <div class="trash-section-header">
                     <span class="trash-section-title">Hợp đồng bảo trì</span>
                     <span class="trash-count">${contracts.length}</span>
                 </div>
                 <div class="trash-grid">
-                    ${contracts.map((c: any) => `
+                    ${contracts
+                        .map(
+                            (c: any) => `
                     <div class="trash-card trash-card--contract">
                         <div class="trash-card-header">
                             <div class="trash-card-icon trash-card-icon--contract">${iconContract}</div>
@@ -1006,9 +1534,13 @@ async function loadTrashData(): Promise<void> {
                             </button>
                         </div>
                     </div>
-                    `).join('')}
+                    `
+                        )
+                        .join('')}
                 </div>
-            </div>` : ''}
+            </div>`
+                    : ''
+            }
         `
 
         container.querySelectorAll('[data-restore-customer]').forEach((btn) => {
