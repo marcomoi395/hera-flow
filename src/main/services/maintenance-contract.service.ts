@@ -1,12 +1,19 @@
 import { MaintenanceContract } from '../models/maintenance-contract.model'
 import { Customer } from '../models/customer.model'
+import { Elevator } from '../models/elevator.model'
+
+export interface ElevatorItemData {
+    weight: number
+    numberOfStops: number
+    quantity: number
+}
 
 export interface CreateMaintenanceContractData {
     customerId: string
     contractNumber: string
     startDate: Date
     endDate: Date
-    equipmentItems?: string[]
+    equipmentItems?: ElevatorItemData[]
 }
 
 export interface UpdateMaintenanceContractData {
@@ -50,12 +57,22 @@ export class MaintenanceContractService {
     }
 
     static async create(data: CreateMaintenanceContractData) {
+        const elevatorIds: string[] = []
         try {
+            for (const item of data.equipmentItems ?? []) {
+                const elevator = await new Elevator({
+                    weight: item.weight,
+                    numberOfStops: item.numberOfStops,
+                    quantity: item.quantity
+                }).save()
+                elevatorIds.push(elevator._id.toString())
+            }
+
             const contract = new MaintenanceContract({
                 contractNumber: data.contractNumber,
                 startDate: data.startDate,
                 endDate: data.endDate,
-                equipmentItems: data.equipmentItems ?? []
+                equipmentItems: elevatorIds
             })
             const saved = await contract.save()
 
@@ -64,7 +81,14 @@ export class MaintenanceContractService {
             })
 
             return saved.toObject()
-        } catch (error) {
+        } catch (error: any) {
+            // Roll back any created Elevator documents
+            if (elevatorIds.length > 0) {
+                await Elevator.deleteMany({ _id: { $in: elevatorIds } })
+            }
+            if (error.code === 11000) {
+                throw new Error(`Số hợp đồng "${data.contractNumber}" đã tồn tại`)
+            }
             console.error('Error creating maintenance contract:', error)
             throw error
         }

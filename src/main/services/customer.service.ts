@@ -16,7 +16,10 @@ export interface CreateCustomerData {
 export class CustomerService {
     static async getAllCustomers(): Promise<ICustomer[]> {
         try {
-            return await Customer.find({ isDeleted: false }).populate('maintenanceContracts').lean()
+            const customers = await Customer.find({ isDeleted: false })
+                .populate('maintenanceContracts')
+                .lean()
+            return customers.map((c) => ({ ...c, _id: c._id.toString() })) as any
         } catch (error) {
             console.error('', error)
             throw error
@@ -26,7 +29,7 @@ export class CustomerService {
     static async getCustomerById(id: string) {
         try {
             const customer = await Customer.findOne({ _id: id, isDeleted: false })
-                .populate('maintenanceContracts')
+                .populate({ path: 'maintenanceContracts', populate: { path: 'equipmentItems' } })
                 .populate('warrantyHistory')
                 .lean()
 
@@ -34,7 +37,18 @@ export class CustomerService {
                 throw new Error('Not found customer with id: ' + id)
             }
 
-            return customer
+            const result: any = { ...customer, _id: customer._id.toString() }
+            // Convert Decimal128 weight to plain number in nested elevator items
+            if (Array.isArray(result.maintenanceContracts)) {
+                result.maintenanceContracts = result.maintenanceContracts.map((contract: any) => ({
+                    ...contract,
+                    equipmentItems: (contract.equipmentItems ?? []).map((item: any) => ({
+                        ...item,
+                        weight: parseFloat(item.weight?.toString() ?? '0')
+                    }))
+                }))
+            }
+            return result
         } catch (error) {
             console.error('Lỗi khi lấy thông tin chi tiết khách hàng:', error)
             throw error
