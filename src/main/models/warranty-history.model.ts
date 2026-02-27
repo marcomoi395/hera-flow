@@ -12,6 +12,7 @@ interface IWarrantyHistory extends Document {
         | 'company requested repair'
         | 'other'
     maintenanceContents: string[]
+    notes: string
     isDeleted: boolean
 }
 
@@ -36,6 +37,7 @@ const WarrantyHistorySchema = new Schema<IWarrantyHistory>(
             required: true
         },
         maintenanceContents: [{ type: String }],
+        notes: { type: String, default: '' },
         isDeleted: { type: Boolean, default: false }
     },
     { timestamps: true }
