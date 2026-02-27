@@ -12,6 +12,7 @@ Database.getInstance()
 import { CustomerService } from './services/customer.service'
 import { MaintenanceContractService } from './services/maintenance-contract.service'
 import { WarrantyHistoryService } from './services/warranty-history.service'
+import { TrashService } from './services/trash.service'
 
 function createWindow(): void {
     // Create the browser window.
@@ -123,6 +124,35 @@ app.whenReady().then(() => {
 
     ipcMain.handle('delete-warranty-history', async (_, id: string) => {
         return await WarrantyHistoryService.delete(id)
+    })
+
+    // Trash Service IPC Handlers
+    ipcMain.handle('trash-get-deleted-customers', async () => {
+        return await TrashService.getDeletedCustomers()
+    })
+
+    ipcMain.handle('trash-get-deleted-contracts', async () => {
+        return await TrashService.getDeletedContracts()
+    })
+
+    ipcMain.handle('trash-restore-customer', async (_, id: string) => {
+        return await TrashService.restoreCustomer(id)
+    })
+
+    ipcMain.handle('trash-restore-contract', async (_, id: string) => {
+        return await TrashService.restoreContract(id)
+    })
+
+    ipcMain.handle('trash-permanent-delete-customer', async (_, id: string) => {
+        return await TrashService.permanentDeleteCustomer(id)
+    })
+
+    ipcMain.handle('trash-permanent-delete-contract', async (_, id: string) => {
+        return await TrashService.permanentDeleteContract(id)
+    })
+
+    ipcMain.handle('trash-empty', async () => {
+        return await TrashService.emptyTrash()
     })
 
     createWindow()

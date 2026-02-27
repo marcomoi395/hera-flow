@@ -21,6 +21,14 @@ declare global {
             createWarrantyHistory: (data: any) => Promise<any>
             updateWarrantyHistory: (id: string, data: any) => Promise<any>
             deleteWarrantyHistory: (id: string) => Promise<any>
+
+            trashGetDeletedCustomers: () => Promise<any[]>
+            trashGetDeletedContracts: () => Promise<any[]>
+            trashRestoreCustomer: (id: string) => Promise<any>
+            trashRestoreContract: (id: string) => Promise<any>
+            trashPermanentDeleteCustomer: (id: string) => Promise<any>
+            trashPermanentDeleteContract: (id: string) => Promise<any>
+            trashEmpty: () => Promise<any>
         }
     }
 }

@@ -40,7 +40,21 @@ const api = {
     updateWarrantyHistory: (id: string, data: UpdateWarrantyHistoryData) =>
         electronAPI.ipcRenderer.invoke('update-warranty-history', id, data),
     deleteWarrantyHistory: (id: string) =>
-        electronAPI.ipcRenderer.invoke('delete-warranty-history', id)
+        electronAPI.ipcRenderer.invoke('delete-warranty-history', id),
+
+    trashGetDeletedCustomers: () =>
+        electronAPI.ipcRenderer.invoke('trash-get-deleted-customers'),
+    trashGetDeletedContracts: () =>
+        electronAPI.ipcRenderer.invoke('trash-get-deleted-contracts'),
+    trashRestoreCustomer: (id: string) =>
+        electronAPI.ipcRenderer.invoke('trash-restore-customer', id),
+    trashRestoreContract: (id: string) =>
+        electronAPI.ipcRenderer.invoke('trash-restore-contract', id),
+    trashPermanentDeleteCustomer: (id: string) =>
+        electronAPI.ipcRenderer.invoke('trash-permanent-delete-customer', id),
+    trashPermanentDeleteContract: (id: string) =>
+        electronAPI.ipcRenderer.invoke('trash-permanent-delete-contract', id),
+    trashEmpty: () => electronAPI.ipcRenderer.invoke('trash-empty')
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
