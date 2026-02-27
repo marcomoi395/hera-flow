@@ -1,6 +1,6 @@
 import { contextBridge } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-import { CreateCustomerData } from '../main/services/customer.service'
+import { CreateCustomerData, UpdateCustomerData } from '../main/services/customer.service'
 import {
     CreateMaintenanceContractData,
     UpdateMaintenanceContractData
@@ -16,6 +16,9 @@ const api = {
     getCustomerById: (id: string) => electronAPI.ipcRenderer.invoke('get-customer-by-id', id),
     createCustomer: (data: CreateCustomerData) =>
         electronAPI.ipcRenderer.invoke('create-customer', data),
+    updateCustomer: (id: string, data: UpdateCustomerData) =>
+        electronAPI.ipcRenderer.invoke('update-customer', id, data),
+    deleteCustomer: (id: string) => electronAPI.ipcRenderer.invoke('delete-customer', id),
 
     getAllMaintenanceContracts: (customerId: string) =>
         electronAPI.ipcRenderer.invoke('get-all-maintenance-contracts', customerId),

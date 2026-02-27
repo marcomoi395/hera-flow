@@ -77,6 +77,14 @@ app.whenReady().then(() => {
         return await CustomerService.createCustomer(data)
     })
 
+    ipcMain.handle('update-customer', async (_, id: string, data: any) => {
+        return await CustomerService.updateCustomer(id, data)
+    })
+
+    ipcMain.handle('delete-customer', async (_, id: string) => {
+        return await CustomerService.deleteCustomer(id)
+    })
+
     ipcMain.handle('get-all-maintenance-contracts', async (_, customerId: string) => {
         return await MaintenanceContractService.getAllByCustomer(customerId)
     })

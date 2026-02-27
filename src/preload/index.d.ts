@@ -7,6 +7,8 @@ declare global {
             getAllCustomers: () => Promise<any[]>
             getCustomerById: (id: string) => Promise<any>
             createCustomer: (data: any) => Promise<any>
+            updateCustomer: (id: string, data: any) => Promise<any>
+            deleteCustomer: (id: string) => Promise<any>
 
             getAllMaintenanceContracts: (customerId: string) => Promise<any[]>
             getMaintenanceContract: (id: string) => Promise<any>
