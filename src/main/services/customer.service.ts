@@ -64,6 +64,13 @@ export class CustomerService {
                     }))
                 }))
             }
+            if (Array.isArray(result.warrantyHistory)) {
+                result.warrantyHistory = result.warrantyHistory.map((h: any) => ({
+                    ...h,
+                    _id: h._id?.toString(),
+                    contractNumber: h.contractNumber?.toString?.() ?? h.contractNumber ?? null
+                }))
+            }
             return result
         } catch (error) {
             console.error('Lỗi khi lấy thông tin chi tiết khách hàng:', error)

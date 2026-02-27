@@ -15,6 +15,7 @@ export interface CreateWarrantyHistoryData {
     date: Date
     taskType: WarrantyTaskType
     maintenanceContents?: string[]
+    notes?: string
 }
 
 export interface UpdateWarrantyHistoryData {
@@ -22,6 +23,7 @@ export interface UpdateWarrantyHistoryData {
     date?: Date
     taskType?: WarrantyTaskType
     maintenanceContents?: string[]
+    notes?: string
 }
 
 export class WarrantyHistoryService {
@@ -61,7 +63,8 @@ export class WarrantyHistoryService {
                 contractNumber: data.contractNumber ?? null,
                 date: data.date,
                 taskType: data.taskType,
-                maintenanceContents: data.maintenanceContents ?? []
+                maintenanceContents: data.maintenanceContents ?? [],
+                notes: data.notes ?? ''
             })
             const saved = await entry.save()
 
