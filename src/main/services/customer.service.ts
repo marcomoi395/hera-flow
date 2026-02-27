@@ -1,5 +1,5 @@
 import { Customer, ICustomer } from '../models/customer.model'
-import '../models/maintenance-contract.model'
+import { MaintenanceContract } from '../models/maintenance-contract.model'
 import '../models/elevator.model'
 import '../models/warranty-history.model'
 
@@ -27,7 +27,7 @@ export class CustomerService {
     static async getAllCustomers(): Promise<ICustomer[]> {
         try {
             const customers = await Customer.find({ isDeleted: false })
-                .populate('maintenanceContracts')
+                .populate({ path: 'maintenanceContracts', match: { isDeleted: false } })
                 .lean()
             return customers.map((c) => ({ ...c, _id: c._id.toString() })) as any
         } catch (error) {
@@ -39,7 +39,11 @@ export class CustomerService {
     static async getCustomerById(id: string) {
         try {
             const customer = await Customer.findOne({ _id: id, isDeleted: false })
-                .populate({ path: 'maintenanceContracts', populate: { path: 'equipmentItems' } })
+                .populate({
+                    path: 'maintenanceContracts',
+                    match: { isDeleted: false },
+                    populate: { path: 'equipmentItems' }
+                })
                 .populate('warrantyHistory')
                 .lean()
 
@@ -127,6 +131,12 @@ export class CustomerService {
             if (!deleted) {
                 throw new Error('Customer not found: ' + id)
             }
+
+            // Cascade soft-delete all maintenance contracts belonging to this customer
+            await MaintenanceContract.updateMany(
+                { _id: { $in: deleted.maintenanceContracts }, isDeleted: false },
+                { isDeleted: true, deletedByParent: deleted._id }
+            )
 
             return { ...deleted, _id: deleted._id.toString() }
         } catch (error) {

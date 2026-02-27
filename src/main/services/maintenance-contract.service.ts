@@ -27,7 +27,7 @@ export class MaintenanceContractService {
     static async getAllByCustomer(customerId: string) {
         try {
             const customer = await Customer.findOne({ _id: customerId, isDeleted: false })
-                .populate('maintenanceContracts')
+                .populate({ path: 'maintenanceContracts', match: { isDeleted: false } })
                 .lean()
 
             if (!customer) {
@@ -150,11 +150,6 @@ export class MaintenanceContractService {
             if (!deleted) {
                 throw new Error('Maintenance contract not found: ' + id)
             }
-
-            await Customer.updateMany(
-                { maintenanceContracts: id },
-                { $pull: { maintenanceContracts: id } }
-            )
 
             return deleted
         } catch (error) {
