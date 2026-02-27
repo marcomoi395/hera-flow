@@ -28,7 +28,6 @@
                 <div class="modal-body">
                     <form id="addCustomerForm">
                         <div class="form-section">
-                            <h3>Thông tin Khách Hàng</h3>
                             <div class="form-group">
                                 <label for="customerName"
                                     >Tên khách hàng <span class="required">*</span></label
@@ -104,30 +103,55 @@
                 <div class="modal-body">
                     <form id="addContractForm">
                         <div class="form-section">
-                            <h3>Thông tin Hợp Đồng</h3>
                             <div class="form-group">
-                                <label for="contractNumber">Số hợp đồng <span class="required">*</span></label>
-                                <input type="text" id="contractNumber" name="contractNumber" required />
+                                <label for="contractNumber"
+                                    >Số hợp đồng <span class="required">*</span></label
+                                >
+                                <input
+                                    type="text"
+                                    id="contractNumber"
+                                    name="contractNumber"
+                                    required
+                                />
                             </div>
                             <div class="form-group-row">
                                 <div class="form-group">
-                                    <label for="startDate">Ngày bắt đầu <span class="required">*</span></label>
+                                    <label for="startDate"
+                                        >Ngày bắt đầu <span class="required">*</span></label
+                                    >
                                     <input type="date" id="startDate" name="startDate" required />
                                 </div>
                                 <div class="form-group">
-                                    <label for="endDate">Ngày kết thúc <span class="required">*</span></label>
+                                    <label for="endDate"
+                                        >Ngày kết thúc <span class="required">*</span></label
+                                    >
                                     <input type="date" id="endDate" name="endDate" required />
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label>Thiết bị bảo trì</label>
                                 <div id="equipmentItemsList"></div>
-                                <button type="button" class="btn btn-secondary" id="addEquipmentItemBtn" style="margin-top:8px">+ Thêm thiết bị</button>
+                                <button
+                                    type="button"
+                                    class="btn btn-secondary"
+                                    id="addEquipmentItemBtn"
+                                    style="margin-top: 8px"
+                                >
+                                    + Thêm thiết bị
+                                </button>
                             </div>
                         </div>
                         <div class="form-actions">
-                            <button type="button" class="btn btn-secondary" id="cancelAddContractBtn">Bỏ Qua</button>
-                            <button type="submit" class="btn btn-primary" id="saveContractBtn">Lưu Lại</button>
+                            <button
+                                type="button"
+                                class="btn btn-secondary"
+                                id="cancelAddContractBtn"
+                            >
+                                Bỏ Qua
+                            </button>
+                            <button type="submit" class="btn btn-primary" id="saveContractBtn">
+                                Lưu Lại
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -137,4 +161,3 @@
         <script type="module" src="./src/renderer.ts"></script>
     </body>
 </html>
-

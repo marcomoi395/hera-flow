@@ -12,18 +12,19 @@ function renderListPage(): void {
         <header class="app-header">
             <div class="header-brand">
                 <div class="header-logo">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/>
                     </svg>
                 </div>
-                <div>
+                <div class="header-text">
                     <h1>Hera Flow</h1>
-                    <p>Quản lý hợp đồng bảo trì &amp; bảo hành thang máy</p>
+                    <p class="header-subtitle">Quản lý bảo trì &amp; bảo hành thang máy</p>
                 </div>
             </div>
             <div class="header-actions">
-                <button class="btn btn-primary" id="openAddCustomerModalBtn">
-                    <span>+</span> Thêm Khách Hàng
+                <button class="btn-header-action" id="openAddCustomerModalBtn">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Thêm Khách Hàng
                 </button>
             </div>
         </header>
@@ -181,11 +182,26 @@ function renderDetailPage(customerId: string): void {
     const app = document.getElementById('app')!
     app.innerHTML = `
         <header class="app-header">
-            <div class="header-content">
-                <button class="btn btn-secondary" id="backBtn">← Quay lại</button>
+            <div class="header-brand">
+                <div class="header-logo">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/>
+                    </svg>
+                </div>
+                <div class="header-text">
+                    <h1>Hera Flow</h1>
+                </div>
+                <span class="header-sep">|</span>
+                <button class="btn-back" id="backBtn">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+                    Quay lại
+                </button>
             </div>
             <div class="header-actions">
-                <button class="btn btn-primary" id="openAddContractModalBtn">+ Hợp Đồng Mới</button>
+                <button class="btn-header-action" id="openAddContractModalBtn">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Hợp Đồng Mới
+                </button>
             </div>
         </header>
         <main class="app-main">
