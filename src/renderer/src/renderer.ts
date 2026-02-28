@@ -606,27 +606,15 @@ function getLatestContractEndDate(customer: any): string | null {
 function applyFilter(customers: any[]): any[] {
     return customers.filter((c) => {
         if (activeFilter !== 'all') {
-            const warrantyStatus = getWarrantyStatus(c)
             const contractStatus = getDateStatus(getLatestContractEndDate(c))
-            const matches = (status: string) =>
-                warrantyStatus === status || contractStatus === status
-            if (activeFilter === 'active' && !matches('active')) {
+            if (activeFilter === 'active' && contractStatus !== 'active') {
                 return false
             }
-            if (activeFilter === 'expiring' && !matches('expiring')) {
+            if (activeFilter === 'expiring' && contractStatus !== 'expiring') {
                 return false
             }
-            if (activeFilter === 'expired') {
-                const hasActiveService =
-                    warrantyStatus === 'active' ||
-                    warrantyStatus === 'expiring' ||
-                    contractStatus === 'active' ||
-                    contractStatus === 'expiring'
-                const hasExpiredService =
-                    warrantyStatus === 'expired' || contractStatus === 'expired'
-                if (hasActiveService || !hasExpiredService) {
-                    return false
-                }
+            if (activeFilter === 'expired' && contractStatus !== 'expired') {
+                return false
             }
         }
         if (searchQuery) {
