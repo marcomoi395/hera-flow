@@ -9,6 +9,7 @@ export interface ICustomer extends Document {
     contractSigningDate?: Date
     acceptanceSigningDate?: Date
     warrantyExpirationDate?: Date
+    inspectionDate?: Date
     maintenanceContracts: Types.ObjectId[]
     warrantyHistory: Types.ObjectId[]
     notes: string[]
@@ -23,6 +24,7 @@ const CustomerSchema = new Schema<ICustomer>(
         contractSigningDate: { type: Date },
         acceptanceSigningDate: { type: Date },
         warrantyExpirationDate: { type: Date },
+        inspectionDate: { type: Date },
 
         maintenanceContracts: [
             {

@@ -10,6 +10,7 @@ export interface CreateCustomerData {
     contractSigningDate?: Date | null
     acceptanceSigningDate?: Date | null
     warrantyExpirationDate?: Date | null
+    inspectionDate?: Date | null
     notes?: string
 }
 
@@ -20,6 +21,7 @@ export interface UpdateCustomerData {
     contractSigningDate?: Date | null
     acceptanceSigningDate?: Date | null
     warrantyExpirationDate?: Date | null
+    inspectionDate?: Date | null
     notes?: string[]
 }
 
@@ -86,6 +88,7 @@ export class CustomerService {
             contractSigningDate: data.contractSigningDate || null,
             acceptanceSigningDate: data.acceptanceSigningDate || null,
             warrantyExpirationDate: data.warrantyExpirationDate || null,
+            inspectionDate: data.inspectionDate || null,
             notes: data.notes ? [data.notes] : [],
             maintenanceContracts: [],
             warrantyHistory: []
@@ -110,6 +113,9 @@ export class CustomerService {
                     }),
                     ...(data.warrantyExpirationDate !== undefined && {
                         warrantyExpirationDate: data.warrantyExpirationDate
+                    }),
+                    ...(data.inspectionDate !== undefined && {
+                        inspectionDate: data.inspectionDate
                     }),
                     ...(data.notes !== undefined && { notes: data.notes })
                 },
