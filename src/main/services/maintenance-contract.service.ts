@@ -43,7 +43,7 @@ export class MaintenanceContractService {
 
     static async getById(id: string) {
         try {
-            const contract = await MaintenanceContract.findById(id).lean()
+            const contract = await MaintenanceContract.findOne({ _id: id, isDeleted: false }).lean()
 
             if (!contract) {
                 throw new Error('Maintenance contract not found: ' + id)

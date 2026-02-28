@@ -46,7 +46,7 @@ export class CustomerService {
                     match: { isDeleted: false },
                     populate: { path: 'equipmentItems' }
                 })
-                .populate('warrantyHistory')
+                .populate({ path: 'warrantyHistory', match: { isDeleted: false } })
                 .lean()
 
             if (!customer) {

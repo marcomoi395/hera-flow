@@ -1,6 +1,6 @@
 import { Customer } from '../models/customer.model'
 import { MaintenanceContract } from '../models/maintenance-contract.model'
-import '../models/elevator.model'
+import { Elevator } from '../models/elevator.model'
 import '../models/warranty-history.model'
 
 export class TrashService {
@@ -82,6 +82,13 @@ export class TrashService {
             }
 
             // Permanently delete contracts that were cascade-deleted with this customer
+            const contracts = await MaintenanceContract.find({
+                deletedByParent: customer._id
+            }).lean()
+            const elevatorIds = contracts.flatMap((c) => c.equipmentItems ?? [])
+            if (elevatorIds.length > 0) {
+                await Elevator.deleteMany({ _id: { $in: elevatorIds } })
+            }
             await MaintenanceContract.deleteMany({ deletedByParent: customer._id })
 
             return { _id: id }
@@ -103,6 +110,10 @@ export class TrashService {
                 throw new Error('Deleted contract not found: ' + id)
             }
 
+            if (contract.equipmentItems?.length) {
+                await Elevator.deleteMany({ _id: { $in: contract.equipmentItems } })
+            }
+
             return { _id: id }
         } catch (error) {
             console.error('Error permanently deleting contract:', error)
@@ -112,6 +123,12 @@ export class TrashService {
 
     static async emptyTrash() {
         try {
+            // Delete elevators belonging to all soft-deleted contracts
+            const contracts = await MaintenanceContract.find({ isDeleted: true }).lean()
+            const elevatorIds = contracts.flatMap((c) => c.equipmentItems ?? [])
+            if (elevatorIds.length > 0) {
+                await Elevator.deleteMany({ _id: { $in: elevatorIds } })
+            }
             // Delete all individually-deleted contracts (no parent)
             await MaintenanceContract.deleteMany({ isDeleted: true, deletedByParent: null })
             // Delete all cascade-deleted contracts along with their customers

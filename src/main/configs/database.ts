@@ -12,12 +12,16 @@ class Database {
             mongoose.set('debug', { color: true })
         }
 
-        const isConnected = mongoose.connection.readyState === 1
-        if (isConnected && this.currentUrl === url) {
+        const readyState = mongoose.connection.readyState
+        if (readyState === 1 && this.currentUrl === url) {
+            return
+        }
+        if (readyState === 2 && this.currentUrl === url) {
+            await new Promise<void>((resolve) => mongoose.connection.once('connected', resolve))
             return
         }
 
-        if (mongoose.connection.readyState !== 0) {
+        if (readyState !== 0) {
             await mongoose.disconnect()
         }
 

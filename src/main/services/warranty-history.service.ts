@@ -30,7 +30,7 @@ export class WarrantyHistoryService {
     static async getAllByCustomer(customerId: string) {
         try {
             const customer = await Customer.findOne({ _id: customerId, isDeleted: false })
-                .populate('warrantyHistory')
+                .populate({ path: 'warrantyHistory', match: { isDeleted: false } })
                 .lean()
             if (!customer) {
                 throw new Error('Customer not found: ' + customerId)
@@ -44,7 +44,7 @@ export class WarrantyHistoryService {
 
     static async getById(id: string) {
         try {
-            const entry = await WarrantyHistory.findById(id).lean()
+            const entry = await WarrantyHistory.findOne({ _id: id, isDeleted: false }).lean()
 
             if (!entry) {
                 throw new Error('Warranty history entry not found: ' + id)
