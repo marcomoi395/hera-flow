@@ -97,8 +97,7 @@ export class ReportService {
                 ? await WarrantyHistory.find({
                       _id: { $in: allHistoryIds },
                       isDeleted: false
-                  })
-                      .lean()
+                  }).lean()
                 : []
 
         // Build a map from customer _id → most recent history
@@ -157,32 +156,43 @@ export class ReportService {
         outputFolder: string
     ): Promise<string[]> {
         const templatePath = ReportService.getTemplatePath()
-        const templateContent = fs.readFileSync(templatePath, 'binary')
 
-        // Pre-fetch customer data for all requests
+        // Fetch template and customer data in parallel (independent operations)
         const customerIds = [...new Set(requests.map((r) => r.customerId))]
-        const customers = await Customer.find({ _id: { $in: customerIds }, isDeleted: false })
-            .populate({
-                path: 'maintenanceContracts',
-                match: { isDeleted: false },
-                populate: { path: 'equipmentItems' }
-            })
-            .lean()
+        const [templateContent, customers] = await Promise.all([
+            fs.promises.readFile(templatePath, 'binary'),
+            Customer.find({ _id: { $in: customerIds }, isDeleted: false })
+                .populate({
+                    path: 'maintenanceContracts',
+                    match: { isDeleted: false },
+                    populate: { path: 'equipmentItems' }
+                })
+                .lean()
+        ])
 
         const customerMap = new Map(customers.map((c) => [c._id.toString(), c]))
 
-        // Pre-compute per-customer sequence numbers (count of non-deleted history + 1)
+        // Count non-deleted history per customer in parallel.
+        // Each query is scoped to one customer's ID array (small $in), avoiding a single
+        // giant $in across all customers which degrades with scale.
         const seqMap = new Map<string, number>()
-        for (const customer of customers) {
-            const ids = (customer.warrantyHistory as any[]) ?? []
-            const count = await WarrantyHistory.countDocuments({
-                _id: { $in: ids },
-                isDeleted: false
+
+        await Promise.all(
+            customers.map(async (customer) => {
+                const ids = (customer.warrantyHistory as any[]) ?? []
+                const count =
+                    ids.length > 0
+                        ? await WarrantyHistory.countDocuments({
+                              _id: { $in: ids },
+                              isDeleted: false
+                          })
+                        : 0
+                seqMap.set(customer._id.toString(), count + 1)
             })
-            seqMap.set(customer._id.toString(), count + 1)
-        }
+        )
 
         const renderedBuffers: Buffer[] = []
+        const entriesToSave: { data: object; customerId: string }[] = []
 
         for (const req of requests) {
             const customer = customerMap.get(req.customerId)
@@ -259,20 +269,33 @@ export class ReportService {
 
             renderedBuffers.push(doc.getZip().generate({ type: 'nodebuffer' }))
 
-            // Save warranty history record
-            const entry = new WarrantyHistory({
-                sequenceNumber,
-                contractNumber: contract?._id ?? null,
-                date: new Date(req.visitDate),
-                taskType: CONG_TAC_TO_TASK_TYPE[req.congTac],
-                maintenanceContents: req.maintenanceContents ?? DEFAULT_MAINTENANCE_CONTENTS
+            // Collect warranty history record for batch insert
+            entriesToSave.push({
+                data: {
+                    sequenceNumber,
+                    contractNumber: contract?._id ?? null,
+                    date: new Date(req.visitDate),
+                    taskType: CONG_TAC_TO_TASK_TYPE[req.congTac],
+                    maintenanceContents: req.maintenanceContents ?? DEFAULT_MAINTENANCE_CONTENTS
+                },
+                customerId: req.customerId
             })
-            const saved = await entry.save()
-            await Customer.findByIdAndUpdate(req.customerId, {
-                $push: { warrantyHistory: saved._id }
-            })
+
             // Increment so if same customer appears twice in one batch they get consecutive numbers
             seqMap.set(req.customerId, sequenceNumber + 1)
+        }
+
+        // Batch-insert all warranty history records and update customers in two round-trips
+        if (entriesToSave.length > 0) {
+            const saved = await WarrantyHistory.insertMany(entriesToSave.map((e) => e.data))
+            await Customer.bulkWrite(
+                saved.map((s, i) => ({
+                    updateOne: {
+                        filter: { _id: entriesToSave[i].customerId },
+                        update: { $push: { warrantyHistory: s._id } }
+                    }
+                }))
+            )
         }
 
         if (renderedBuffers.length === 0) {
