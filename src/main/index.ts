@@ -5,8 +5,8 @@ import { join } from 'path'
 import icon from '../../resources/icon.png?asset'
 dotenv.config()
 
-import dns from "node:dns/promises";
-dns.setServers(["1.1.1.1", "1.0.0.1"]);
+import dns from 'node:dns/promises'
+dns.setServers(['1.1.1.1', '1.0.0.1'])
 
 import Database from './configs/database'
 import { readConfig, writeConfig, clearConfig } from './configs/config-store'

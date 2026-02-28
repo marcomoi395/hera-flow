@@ -275,6 +275,9 @@ function renderListPage(): void {
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                     <input type="text" id="customerSearch" class="filter-search-input" placeholder="Tìm theo tên, công ty, địa chỉ...">
                 </div>
+                <button id="reloadCustomersBtn" class="reload-btn" title="Tải lại dữ liệu">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                </button>
             </div>
             <div id="loading" class="loading-spinner">Đang tải dữ liệu...</div>
             <div id="customersContainer"></div>
@@ -302,6 +305,10 @@ function setupFilterBar(): void {
             searchQuery = searchInput.value.trim().toLowerCase()
             renderFilteredTable()
         })
+    }
+    const reloadBtn = document.getElementById('reloadCustomersBtn')
+    if (reloadBtn) {
+        reloadBtn.addEventListener('click', () => loadCustomers())
     }
 }
 
@@ -416,7 +423,7 @@ function setupMaintenanceReportModal(): void {
                                 <select class="candidate-congtac" data-idx="${i}">
                                     ${CONG_TAC_OPTIONS.map(
                                         (opt) =>
-                                            `<option value="${opt.value}"${opt.value === (c.isWarrantyOnly ? 'baohanh' : 'baotri') ? ' selected' : ''}>${opt.label}</option>`
+                                            `<option value="${opt.value}"${opt.value === 'baotri' ? ' selected' : ''}>${opt.label}</option>`
                                     ).join('')}
                                 </select>
                             </td>
@@ -553,6 +560,7 @@ function setupMaintenanceReportModal(): void {
             }
             alert(`Đã tạo ${result.files.length} file thành công!`)
             closeModal()
+            loadCustomers()
         } catch (err) {
             console.error('Error generating reports:', err)
             alert('Lỗi khi tạo file. Vui lòng thử lại.')
