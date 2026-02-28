@@ -13,7 +13,7 @@ export type CongTacOption = 'baotri' | 'baohanh' | 'khac' | 'kh_yc' | 'cty_yc'
 
 export interface MaintenanceReportRequest {
     customerId: string
-    contractId: string
+    contractId?: string
     congTac: CongTacOption
     visitDate: string // ISO date string (YYYY-MM-DD)
     maintenanceContents?: string[]
@@ -49,13 +49,17 @@ function formatEquipmentItems(equipmentItems: any[]): string {
         return ''
     }
 
-    return equipmentItems
-        .map((item) => {
-            const quantityStr = item.quantity && item.quantity > 1 ? `${item.quantity} x ` : ''
+    const indent = ' '.repeat(17)
 
+    return equipmentItems
+        .map((item, index) => {
+            const quantityStr = item.quantity && item.quantity > 1 ? `${item.quantity} x ` : ''
             const weight = parseFloat(item.weight?.toString() ?? '0')
 
-            return `${quantityStr}Thang máy tải trọng ${weight}kg, ${item.numberOfStops} điểm dừng`
+            const lineContent = `${quantityStr}Thang máy tải trọng ${weight}kg, ${item.numberOfStops} điểm dừng`
+
+            // Nếu index > 0 (từ thằng thứ 2 trở đi) thì thêm indent vào trước
+            return index === 0 ? lineContent : `${indent}${lineContent}`
         })
         .join('\n')
 }
@@ -104,10 +108,12 @@ export class ReportService {
             const lastMaintenanceContents: string[] | null =
                 lastHistory?.maintenanceContents ?? null
 
+            let hasActiveContract = false
             for (const contract of contracts) {
                 const start = new Date(contract.startDate)
                 const end = new Date(contract.endDate)
                 if (start <= now && end >= now) {
+                    hasActiveContract = true
                     result.push({
                         customerId: customer._id.toString(),
                         customerName: customer.customerName,
@@ -123,7 +129,28 @@ export class ReportService {
                             numberOfStops: item.numberOfStops,
                             quantity: item.quantity
                         })),
-                        lastMaintenanceContents
+                        lastMaintenanceContents,
+                        isWarrantyOnly: false
+                    })
+                }
+            }
+
+            // Include warranty-only customers (active warranty, no active maintenance contract)
+            if (!hasActiveContract && customer.warrantyExpirationDate) {
+                const warrantyEnd = new Date(customer.warrantyExpirationDate as any)
+                if (warrantyEnd >= now) {
+                    result.push({
+                        customerId: customer._id.toString(),
+                        customerName: customer.customerName,
+                        companyName: customer.companyName ?? '',
+                        address: customer.address,
+                        contractId: null,
+                        contractNumber: '',
+                        startDate: (customer as any).acceptanceSigningDate ?? null,
+                        endDate: customer.warrantyExpirationDate,
+                        equipmentItems: [],
+                        lastMaintenanceContents,
+                        isWarrantyOnly: true
                     })
                 }
             }
@@ -170,15 +197,17 @@ export class ReportService {
             }
 
             const contracts = (customer.maintenanceContracts as any[]) ?? []
-            const contract = contracts.find((c) => c._id.toString() === req.contractId)
-            if (!contract) {
+            const contract = req.contractId
+                ? (contracts.find((c) => c._id.toString() === req.contractId) ?? null)
+                : null
+            if (req.contractId && !contract) {
                 continue
             }
 
             // Per-customer sequence number
             const sequenceNumber = seqMap.get(req.customerId) ?? 1
 
-            const equipmentItems = (contract.equipmentItems ?? []).map((item: any) => ({
+            const equipmentItems = (contract?.equipmentItems ?? []).map((item: any) => ({
                 weight: parseFloat(item.weight?.toString() ?? '0'),
                 numberOfStops: item.numberOfStops,
                 quantity: item.quantity
@@ -208,8 +237,10 @@ export class ReportService {
                 isKhac: req.congTac === 'khac' ? '☑' : '☐',
                 isKH_YC: req.congTac === 'kh_yc' ? '☑' : '☐',
                 isCty_YC: req.congTac === 'cty_yc' ? '☑' : '☐',
-                contractNumber: contract.contractNumber ?? '',
-                startDate: formatDate(contract.startDate),
+                contractNumber: contract?.contractNumber ?? '',
+                startDate: contract
+                    ? formatDate(contract.startDate)
+                    : formatDate((customer as any).acceptanceSigningDate),
                 equipmentItems: formatEquipmentItems(equipmentItems),
                 numberOfElevators: equipmentItems
                     .reduce((sum: number, item: any) => sum + (item.quantity ?? 1), 0)
@@ -237,7 +268,7 @@ export class ReportService {
             // Save warranty history record
             const entry = new WarrantyHistory({
                 sequenceNumber,
-                contractNumber: contract._id,
+                contractNumber: contract?._id ?? null,
                 date: new Date(req.visitDate),
                 taskType: CONG_TAC_TO_TASK_TYPE[req.congTac],
                 maintenanceContents: req.maintenanceContents ?? DEFAULT_MAINTENANCE_CONTENTS
