@@ -343,16 +343,6 @@ function setupMaintenanceReportModal(): void {
     const modal = document.getElementById('maintenanceReportModal')!
     const openBtn = document.getElementById('openMaintenanceReportModalBtn')
 
-    if (modal.dataset.initialized) {
-        openBtn?.addEventListener('click', () => modal.classList.add('show'))
-        return
-    }
-    modal.dataset.initialized = 'true'
-
-    const closeBtn = document.getElementById('closeMaintenanceReportModalBtn')!
-    const cancelBtn = document.getElementById('cancelMaintenanceReportBtn')!
-    const generateBtn = document.getElementById('generateReportBtn')!
-
     const openModal = async () => {
         modal.classList.add('show')
         // Default visit date to today
@@ -495,9 +485,21 @@ function setupMaintenanceReportModal(): void {
         }
     }
 
+    // openBtn lives inside the re-rendered page, so re-attach its listener every time.
+    // Only register the modal's own persistent listeners (close, generate) once.
+    openBtn?.addEventListener('click', openModal)
+
+    if (modal.dataset.initialized) {
+        return
+    }
+    modal.dataset.initialized = 'true'
+
+    const closeBtn = document.getElementById('closeMaintenanceReportModalBtn')!
+    const cancelBtn = document.getElementById('cancelMaintenanceReportBtn')!
+    const generateBtn = document.getElementById('generateReportBtn')!
+
     const closeModal = () => modal.classList.remove('show')
 
-    openBtn?.addEventListener('click', openModal)
     closeBtn.addEventListener('click', closeModal)
     cancelBtn.addEventListener('click', closeModal)
     modal.addEventListener('click', (e) => {
