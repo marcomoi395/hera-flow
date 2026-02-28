@@ -29,6 +29,7 @@ export class CustomerService {
     static async getAllCustomers(): Promise<ICustomer[]> {
         try {
             const customers = await Customer.find({ isDeleted: false })
+                .sort({ createdAt: 1 })
                 .populate({ path: 'maintenanceContracts', match: { isDeleted: false } })
                 .lean()
             return customers.map((c) => ({ ...c, _id: c._id.toString() })) as any

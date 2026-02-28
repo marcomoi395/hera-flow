@@ -13,7 +13,7 @@ interface IMaintenanceContract extends Document {
 
 const MaintenanceContractSchema = new Schema<IMaintenanceContract>(
     {
-        contractNumber: { type: String, unique: true, sparse: true },
+        contractNumber: { type: String, sparse: true },
         startDate: { type: Date, required: true },
         endDate: { type: Date, required: true },
         equipmentItems: [
