@@ -11,6 +11,7 @@ dns.setServers(["1.1.1.1", "1.0.0.1"]);
 import Database from './configs/database'
 import { readConfig, writeConfig, clearConfig } from './configs/config-store'
 
+import { MaintenanceContract } from './models/maintenance-contract.model'
 import { CustomerService } from './services/customer.service'
 import { MaintenanceContractService } from './services/maintenance-contract.service'
 import { WarrantyHistoryService } from './services/warranty-history.service'
@@ -79,6 +80,7 @@ app.whenReady().then(() => {
     ipcMain.handle('connect-db', async (_, url: string) => {
         try {
             await Database.getInstance().connect(url)
+            await MaintenanceContract.syncIndexes()
             writeConfig({ mongoUrl: url })
             return { success: true }
         } catch (err: any) {
