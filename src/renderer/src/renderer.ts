@@ -39,7 +39,12 @@ function launchApp(): void {
     })
 }
 
-function renderSetupPage(prefillUrl = '', connecting = false, errorMsg?: string, canCancel = false): void {
+function renderSetupPage(
+    prefillUrl = '',
+    connecting = false,
+    errorMsg?: string,
+    canCancel = false
+): void {
     document.getElementById('sidebar')!.style.display = 'none'
     document.getElementById('app')!.innerHTML = ''
 
@@ -88,7 +93,9 @@ function renderSetupPage(prefillUrl = '', connecting = false, errorMsg?: string,
     form.onsubmit = async (e) => {
         e.preventDefault()
         const url = (document.getElementById('setupUrl') as HTMLInputElement).value.trim()
-        if (!url) return
+        if (!url) {
+            return
+        }
 
         btn.disabled = true
         btn.textContent = 'Đang kết nối...'
@@ -128,7 +135,9 @@ function navigateTo(page: Page): void {
 
 function navigateBack(): void {
     const prev = pageHistory.pop()
-    if (prev === undefined) return
+    if (prev === undefined) {
+        return
+    }
     currentPage = prev
     if (prev === 'list') {
         setActiveNav('navCustomers')
@@ -435,20 +444,28 @@ function setupMaintenanceReportModal(): void {
             })
 
             // Click anywhere on a candidate row to toggle its checkbox
-            document.querySelectorAll<HTMLTableRowElement>('tr[data-candidate-idx]').forEach((row) => {
-                row.style.cursor = 'pointer'
-                row.addEventListener('click', (e) => {
-                    const target = e.target as HTMLElement
-                    if (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'BUTTON') {
-                        return
-                    }
-                    const idx = row.dataset.candidateIdx
-                    const cb = row.querySelector<HTMLInputElement>(`.candidate-check[data-idx="${idx}"]`)
-                    if (cb) {
-                        cb.checked = !cb.checked
-                    }
+            document
+                .querySelectorAll<HTMLTableRowElement>('tr[data-candidate-idx]')
+                .forEach((row) => {
+                    row.style.cursor = 'pointer'
+                    row.addEventListener('click', (e) => {
+                        const target = e.target as HTMLElement
+                        if (
+                            target.tagName === 'INPUT' ||
+                            target.tagName === 'SELECT' ||
+                            target.tagName === 'BUTTON'
+                        ) {
+                            return
+                        }
+                        const idx = row.dataset.candidateIdx
+                        const cb = row.querySelector<HTMLInputElement>(
+                            `.candidate-check[data-idx="${idx}"]`
+                        )
+                        if (cb) {
+                            cb.checked = !cb.checked
+                        }
+                    })
                 })
-            })
 
             // Toggle per-candidate contents sub-row
             document.querySelectorAll('.btn-toggle-contents').forEach((btn) => {
@@ -1037,16 +1054,16 @@ async function loadCustomerDetail(customerId: string): Promise<void> {
                         <span class="detail-value">${fmt(customer.contractSigningDate)}</span>
                     </div>
                     <div class="detail-field">
+                        <span class="detail-label">Ngày kiểm định</span>
+                        <span class="detail-value">${fmt(customer.inspectionDate)}</span>
+                    </div>
+                    <div class="detail-field">
                         <span class="detail-label">Ngày nghiệm thu</span>
                         <span class="detail-value">${fmt(customer.acceptanceSigningDate)}</span>
                     </div>
                     <div class="detail-field">
                         <span class="detail-label">Hết hạn bảo hành</span>
                         <span class="detail-value">${fmt(customer.warrantyExpirationDate)}</span>
-                    </div>
-                    <div class="detail-field">
-                        <span class="detail-label">Ngày kiểm định</span>
-                        <span class="detail-value">${fmt(customer.inspectionDate)}</span>
                     </div>
                     <div class="detail-field">
                         <span class="detail-label">Ghi chú</span>
