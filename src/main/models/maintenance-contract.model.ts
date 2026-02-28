@@ -6,13 +6,14 @@ interface IMaintenanceContract extends Document {
     startDate: Date
     endDate: Date
     equipmentItems: Types.ObjectId[]
+    isWarrantyOnly: boolean
     isDeleted: boolean
     deletedByParent: Types.ObjectId | null
 }
 
 const MaintenanceContractSchema = new Schema<IMaintenanceContract>(
     {
-        contractNumber: { type: String, unique: true },
+        contractNumber: { type: String, unique: true, sparse: true },
         startDate: { type: Date, required: true },
         endDate: { type: Date, required: true },
         equipmentItems: [
@@ -21,6 +22,7 @@ const MaintenanceContractSchema = new Schema<IMaintenanceContract>(
                 ref: Elevator
             }
         ],
+        isWarrantyOnly: { type: Boolean, default: false },
         isDeleted: { type: Boolean, default: false },
         deletedByParent: { type: Schema.Types.ObjectId, default: null }
     },

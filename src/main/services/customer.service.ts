@@ -94,7 +94,21 @@ export class CustomerService {
             warrantyHistory: []
         })
 
-        return (await newCustomer.save()).toObject()
+        const saved = await newCustomer.save()
+
+        if (data.acceptanceSigningDate && data.warrantyExpirationDate) {
+            const contract = await new MaintenanceContract({
+                startDate: data.acceptanceSigningDate,
+                endDate: data.warrantyExpirationDate,
+                isWarrantyOnly: true,
+                equipmentItems: []
+            }).save()
+
+            saved.maintenanceContracts.push(contract._id as any)
+            await saved.save()
+        }
+
+        return saved.toObject()
     }
 
     static async updateCustomer(id: string, data: UpdateCustomerData) {
