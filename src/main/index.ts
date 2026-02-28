@@ -5,9 +5,8 @@ import { join } from 'path'
 import icon from '../../resources/icon.png?asset'
 dotenv.config()
 
-// Connect to database
 import Database from './configs/database'
-Database.getInstance()
+import { readConfig, writeConfig, clearConfig } from './configs/config-store'
 
 import { CustomerService } from './services/customer.service'
 import { MaintenanceContractService } from './services/maintenance-contract.service'
@@ -65,6 +64,25 @@ app.whenReady().then(() => {
 
     // IPC test
     ipcMain.on('ping', () => console.log('pong'))
+
+    // DB connection IPC handlers
+    ipcMain.handle('get-db-url', () => {
+        return readConfig().mongoUrl ?? null
+    })
+
+    ipcMain.handle('connect-db', async (_, url: string) => {
+        try {
+            await Database.getInstance().connect(url)
+            writeConfig({ mongoUrl: url })
+            return { success: true }
+        } catch (err: any) {
+            return { success: false, error: err.message ?? 'Kết nối thất bại' }
+        }
+    })
+
+    ipcMain.handle('reset-db-url', () => {
+        clearConfig()
+    })
 
     // Customer Service IPC Handlers
     ipcMain.handle('get-all-customers', async () => {

@@ -12,6 +12,11 @@ import {
 
 // Custom APIs for renderer
 const api = {
+    getDbUrl: (): Promise<string | null> => electronAPI.ipcRenderer.invoke('get-db-url'),
+    connectDb: (url: string): Promise<{ success: boolean; error?: string }> =>
+        electronAPI.ipcRenderer.invoke('connect-db', url),
+    resetDbUrl: (): Promise<void> => electronAPI.ipcRenderer.invoke('reset-db-url'),
+
     getAllCustomers: () => electronAPI.ipcRenderer.invoke('get-all-customers'),
     getCustomerById: (id: string) => electronAPI.ipcRenderer.invoke('get-customer-by-id', id),
     createCustomer: (data: CreateCustomerData) =>

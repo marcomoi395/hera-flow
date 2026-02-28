@@ -3,33 +3,23 @@ import mongoose from 'mongoose'
 class Database {
     private static instance: Database
 
-    private constructor() {
-        this.connect()
-    }
+    private constructor() {}
 
-    private connect(type: string = 'mongodb'): void {
+    public async connect(url: string): Promise<void> {
         if (process.env.NODE_ENV === 'dev') {
             mongoose.set('debug', true)
             mongoose.set('debug', { color: true })
         }
 
-        console.log(process.env.MONGO_URL)
-
-        if (process.env.MONGO_URL === undefined) {
-            console.error('MONGO_URL is not defined in environment variables')
-            return
+        if (mongoose.connection.readyState !== 0) {
+            await mongoose.disconnect()
         }
 
-        mongoose
-            .connect(process.env.MONGO_URL, {
-                maxPoolSize: 50
-            })
-            .then(() => {
-                console.log(`Connected to ${type} successfully`)
-            })
-            .catch((err: Error) => {
-                console.error(`Error Connect to ${type}:`, err.message)
-            })
+        await mongoose.connect(url, {
+            maxPoolSize: 50,
+            serverSelectionTimeoutMS: 5000
+        })
+        console.log('Connected to MongoDB successfully')
     }
 
     public static getInstance(): Database {
