@@ -75,7 +75,13 @@ function formatDate(date: string | Date | null | undefined): string {
 export class ReportService {
     static getTemplatePath(): string {
         if (app.isPackaged) {
-            return path.join(process.resourcesPath, 'data', 'maintenance-report-template.docx')
+            return path.join(
+                process.resourcesPath,
+                'app.asar.unpacked',
+                'resources',
+                'data',
+                'maintenance-report-template.docx'
+            )
         }
         return path.join(app.getAppPath(), 'resources', 'data', 'maintenance-report-template.docx')
     }
