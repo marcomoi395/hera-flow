@@ -27,7 +27,16 @@ function launchApp(): void {
     document.getElementById('setupOverlay')?.remove()
     document.getElementById('sidebar')!.style.display = ''
     setupSidebar()
+    currentPage = 'list'
+    pageHistory.length = 0
     renderListPage()
+
+    document.addEventListener('mousedown', (e) => {
+        if (e.button === 3) {
+            e.preventDefault()
+            navigateBack()
+        }
+    })
 }
 
 function renderSetupPage(prefillUrl = '', connecting = false, errorMsg?: string, canCancel = false): void {
@@ -97,7 +106,38 @@ function renderSetupPage(prefillUrl = '', connecting = false, errorMsg?: string,
     }
 }
 
-// ─── SIDEBAR ──────────────────────────────────────────────────────────────────
+// ─── NAVIGATION HISTORY ──────────────────────────────────────────────────────
+
+type Page = 'list' | 'trash' | 'detail'
+let currentPage: Page = 'list'
+const pageHistory: Page[] = []
+
+function navigateTo(page: Page): void {
+    if (currentPage !== page) {
+        pageHistory.push(currentPage)
+    }
+    currentPage = page
+    if (page === 'list') {
+        setActiveNav('navCustomers')
+        renderListPage()
+    } else {
+        setActiveNav('navTrash')
+        renderTrashPage()
+    }
+}
+
+function navigateBack(): void {
+    const prev = pageHistory.pop()
+    if (prev === undefined) return
+    currentPage = prev
+    if (prev === 'list') {
+        setActiveNav('navCustomers')
+        renderListPage()
+    } else if (prev === 'trash') {
+        setActiveNav('navTrash')
+        renderTrashPage()
+    }
+}
 
 function setupSidebar(): void {
     const sidebar = document.getElementById('sidebar')!
@@ -131,13 +171,11 @@ function setupSidebar(): void {
     })
 
     navCustomers.addEventListener('click', () => {
-        setActiveNav('navCustomers')
-        renderListPage()
+        navigateTo('list')
     })
 
     navTrash.addEventListener('click', () => {
-        setActiveNav('navTrash')
-        renderTrashPage()
+        navigateTo('trash')
     })
 
     navChangeDb.addEventListener('click', async () => {
@@ -912,6 +950,8 @@ function renderCustomerRow(customer: any, index: number): string {
 // ─── DETAIL PAGE ──────────────────────────────────────────────────────────────
 
 function renderDetailPage(customerId: string): void {
+    pageHistory.push(currentPage)
+    currentPage = 'detail'
     const app = document.getElementById('app')!
     app.innerHTML = `
         <header class="app-header">
@@ -946,7 +986,7 @@ function renderDetailPage(customerId: string): void {
             <div id="detailContainer"></div>
         </main>
     `
-    document.getElementById('backBtn')!.addEventListener('click', renderListPage)
+    document.getElementById('backBtn')!.addEventListener('click', navigateBack)
     loadCustomerDetail(customerId)
     setupAddContractForm(customerId)
     setupEditContractForm(customerId)
