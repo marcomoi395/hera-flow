@@ -2,6 +2,7 @@ import mongoose from 'mongoose'
 
 class Database {
     private static instance: Database
+    private currentUrl: string | null = null
 
     private constructor() {}
 
@@ -11,10 +12,16 @@ class Database {
             mongoose.set('debug', { color: true })
         }
 
+        const isConnected = mongoose.connection.readyState === 1
+        if (isConnected && this.currentUrl === url) {
+            return
+        }
+
         if (mongoose.connection.readyState !== 0) {
             await mongoose.disconnect()
         }
 
+        this.currentUrl = url
         await mongoose.connect(url, {
             maxPoolSize: 50,
             serverSelectionTimeoutMS: 5000
