@@ -90,30 +90,49 @@ export class ReportService {
             })
             .lean()
 
+        // Batch-fetch all warranty histories in a single query to avoid N+1
+        const allHistoryIds = customers.flatMap((c) => (c.warrantyHistory as any[]) ?? [])
+        const allHistories =
+            allHistoryIds.length > 0
+                ? await WarrantyHistory.find({
+                      _id: { $in: allHistoryIds },
+                      isDeleted: false
+                  })
+                      .lean()
+                : []
+
+        // Build a map from customer _id → most recent history
+        const lastHistoryMap = new Map<string, any>()
+        for (const customer of customers) {
+            const ids = new Set(
+                ((customer.warrantyHistory as any[]) ?? []).map((id: any) => id.toString())
+            )
+            const customerHistories = allHistories
+                .filter((h) => ids.has(h._id.toString()))
+                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+            if (customerHistories.length > 0) {
+                lastHistoryMap.set(customer._id.toString(), customerHistories[0])
+            }
+        }
+
         const result: any[] = []
         for (const customer of customers) {
             const contracts = (customer.maintenanceContracts as any[]) ?? []
 
-            // Fetch the most recent warranty history for this customer
-            const historyIds = (customer.warrantyHistory as any[]) ?? []
-            const lastHistory =
-                historyIds.length > 0
-                    ? await WarrantyHistory.findOne({
-                          _id: { $in: historyIds },
-                          isDeleted: false
-                      })
-                          .sort({ date: -1 })
-                          .lean()
-                    : null
+            const lastHistory = lastHistoryMap.get(customer._id.toString()) ?? null
             const lastMaintenanceContents: string[] | null =
                 lastHistory?.maintenanceContents ?? null
 
-            let hasActiveContract = false
             for (const contract of contracts) {
                 const start = new Date(contract.startDate)
                 const end = new Date(contract.endDate)
-                if (start <= now && end >= now) {
-                    hasActiveContract = true
+                const equipmentItems = (contract.equipmentItems ?? []).map((item: any) => ({
+                    _id: item._id?.toString(),
+                    weight: parseFloat(item.weight?.toString() ?? '0'),
+                    numberOfStops: item.numberOfStops,
+                    quantity: item.quantity
+                }))
+                if (start <= now && end >= now && equipmentItems.length > 0) {
                     result.push({
                         customerId: customer._id.toString(),
                         customerName: customer.customerName,
@@ -123,34 +142,9 @@ export class ReportService {
                         contractNumber: contract.contractNumber ?? '',
                         startDate: contract.startDate,
                         endDate: contract.endDate,
-                        equipmentItems: (contract.equipmentItems ?? []).map((item: any) => ({
-                            _id: item._id?.toString(),
-                            weight: parseFloat(item.weight?.toString() ?? '0'),
-                            numberOfStops: item.numberOfStops,
-                            quantity: item.quantity
-                        })),
+                        equipmentItems,
                         lastMaintenanceContents,
                         isWarrantyOnly: false
-                    })
-                }
-            }
-
-            // Include warranty-only customers (active warranty, no active maintenance contract)
-            if (!hasActiveContract && customer.warrantyExpirationDate) {
-                const warrantyEnd = new Date(customer.warrantyExpirationDate as any)
-                if (warrantyEnd >= now) {
-                    result.push({
-                        customerId: customer._id.toString(),
-                        customerName: customer.customerName,
-                        companyName: customer.companyName ?? '',
-                        address: customer.address,
-                        contractId: null,
-                        contractNumber: '',
-                        startDate: (customer as any).acceptanceSigningDate ?? null,
-                        endDate: customer.warrantyExpirationDate,
-                        equipmentItems: [],
-                        lastMaintenanceContents,
-                        isWarrantyOnly: true
                     })
                 }
             }
