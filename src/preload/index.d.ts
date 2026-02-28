@@ -4,6 +4,10 @@ declare global {
     interface Window {
         electron: ElectronAPI
         api: {
+            getDbUrl: () => Promise<string | null>
+            connectDb: (url: string) => Promise<{ success: boolean; error?: string }>
+            resetDbUrl: () => Promise<void>
+
             getAllCustomers: () => Promise<any[]>
             getCustomerById: (id: string) => Promise<any>
             createCustomer: (data: any) => Promise<any>

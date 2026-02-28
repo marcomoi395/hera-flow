@@ -48,6 +48,9 @@ function createWindow(): void {
     }
 }
 
+// Force dd/mm/yyyy format in date inputs across all platforms
+app.commandLine.appendSwitch('lang', 'vi-VN')
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="vi">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -18,25 +18,54 @@
     <body>
         <div class="layout-root">
             <!-- Sidebar -->
-            <aside id="sidebar" class="sidebar">
+            <aside id="sidebar" class="sidebar" style="display:none">
                 <div class="sidebar-top">
                     <div class="sidebar-logo">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/>
+                        <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <rect x="3" y="3" width="18" height="18" rx="2" />
+                            <path d="M9 3v18M15 3v18M3 9h18M3 15h18" />
                         </svg>
                     </div>
                     <span class="sidebar-brand-name">Hera Flow</span>
                     <button id="sidebarToggleBtn" class="sidebar-toggle" title="Thu gọn">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M15 18l-6-6 6-6"/>
+                        <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2.5"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <path d="M15 18l-6-6 6-6" />
                         </svg>
                     </button>
                 </div>
 
                 <div class="sidebar-user">
                     <div class="sidebar-avatar">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                        <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
                         </svg>
                     </div>
                     <div class="sidebar-user-info">
@@ -47,8 +76,19 @@
 
                 <nav class="sidebar-nav">
                     <button class="sidebar-nav-item active" id="navCustomers">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                        <svg
+                            width="17"
+                            height="17"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
                         </svg>
                         <span class="sidebar-nav-label">Khách hàng</span>
                     </button>
@@ -56,10 +96,28 @@
 
                 <div class="sidebar-footer">
                     <button class="sidebar-nav-item" id="navTrash">
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                        <svg
+                            width="17"
+                            height="17"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                            <path d="M10 11v6M14 11v6" />
+                            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
                         </svg>
                         <span class="sidebar-nav-label">Thùng rác</span>
+                    </button>
+                    <button class="sidebar-nav-item" id="navChangeDb" title="Đổi kết nối CSDL">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="5" r="3"/><path d="M12 8v13M5 19a7 7 0 0 1 14 0"/>
+                        </svg>
+                        <span class="sidebar-nav-label">Đổi kết nối</span>
                     </button>
                 </div>
             </aside>
@@ -72,7 +130,7 @@
 
         <!-- Add Customer Modal -->
         <div id="addCustomerModal" class="modal">
-            <div class="modal-content">
+            <div class="modal-content modal-content--wide">
                 <div class="modal-header">
                     <h2>Thêm Khách Hàng Mới</h2>
                     <button class="close-btn" id="closeAddCustomerModalBtn">&times;</button>
@@ -80,15 +138,22 @@
                 <div class="modal-body">
                     <form id="addCustomerForm">
                         <div class="form-section">
-                            <div class="form-group">
-                                <label for="customerName"
-                                    >Tên khách hàng <span class="required">*</span></label
-                                >
-                                <input type="text" id="customerName" name="customerName" required />
-                            </div>
-                            <div class="form-group">
-                                <label for="companyName">Tên công ty</label>
-                                <input type="text" id="companyName" name="companyName" />
+                            <div class="form-group-row">
+                                <div class="form-group">
+                                    <label for="customerName"
+                                        >Tên khách hàng <span class="required">*</span></label
+                                    >
+                                    <input
+                                        type="text"
+                                        id="customerName"
+                                        name="customerName"
+                                        required
+                                    />
+                                </div>
+                                <div class="form-group">
+                                    <label for="companyName">Tên công ty</label>
+                                    <input type="text" id="companyName" name="companyName" />
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label for="address">Địa chỉ <span class="required">*</span></label>
@@ -103,6 +168,12 @@
                                         name="contractSigningDate"
                                     />
                                 </div>
+                                <div class="form-group">
+                                    <label for="inspectionDate">Ngày kiểm định</label>
+                                    <input type="date" id="inspectionDate" name="inspectionDate" />
+                                </div>
+                            </div>
+                            <div class="form-group-row">
                                 <div class="form-group">
                                     <label for="acceptanceSigningDate">Ngày nghiệm thu</label>
                                     <input
@@ -214,7 +285,7 @@
 
         <!-- Edit Customer Modal -->
         <div id="editCustomerModal" class="modal">
-            <div class="modal-content">
+            <div class="modal-content modal-content--wide">
                 <div class="modal-header">
                     <h2>Chỉnh Sửa Khách Hàng</h2>
                     <button class="close-btn" id="closeEditCustomerModalBtn">&times;</button>
@@ -223,30 +294,67 @@
                     <form id="editCustomerForm">
                         <input type="hidden" id="editCustomerId" />
                         <div class="form-section">
-                            <div class="form-group">
-                                <label for="editCustomerName">Tên khách hàng <span class="required">*</span></label>
-                                <input type="text" id="editCustomerName" name="customerName" required />
+                            <div class="form-group-row">
+                                <div class="form-group">
+                                    <label for="editCustomerName"
+                                        >Tên khách hàng <span class="required">*</span></label
+                                    >
+                                    <input
+                                        type="text"
+                                        id="editCustomerName"
+                                        name="customerName"
+                                        required
+                                    />
+                                </div>
+                                <div class="form-group">
+                                    <label for="editCompanyName">Tên công ty</label>
+                                    <input type="text" id="editCompanyName" name="companyName" />
+                                </div>
                             </div>
                             <div class="form-group">
-                                <label for="editCompanyName">Tên công ty</label>
-                                <input type="text" id="editCompanyName" name="companyName" />
-                            </div>
-                            <div class="form-group">
-                                <label for="editAddress">Địa chỉ <span class="required">*</span></label>
+                                <label for="editAddress"
+                                    >Địa chỉ <span class="required">*</span></label
+                                >
                                 <input type="text" id="editAddress" name="address" required />
                             </div>
                             <div class="form-group-row">
                                 <div class="form-group">
                                     <label for="editContractSigningDate">Ngày ký hợp đồng</label>
-                                    <input type="date" id="editContractSigningDate" name="contractSigningDate" />
+                                    <input
+                                        type="date"
+                                        id="editContractSigningDate"
+                                        name="contractSigningDate"
+                                    />
                                 </div>
                                 <div class="form-group">
-                                    <label for="editAcceptanceSigningDate">Ngày nghiệm thu</label>
-                                    <input type="date" id="editAcceptanceSigningDate" name="acceptanceSigningDate" />
+                                    <label for="editInspectionDate">Ngày kiểm định</label>
+                                    <input
+                                        type="date"
+                                        id="editInspectionDate"
+                                        name="inspectionDate"
+                                    />
                                 </div>
+                            </div>
+                            <div class="form-group-row">
                                 <div class="form-group">
-                                    <label for="editWarrantyExpirationDate">Ngày hết hạn bảo hành</label>
-                                    <input type="date" id="editWarrantyExpirationDate" name="warrantyExpirationDate" />
+                                    <div class="form-group">
+                                        <label for="editAcceptanceSigningDate"
+                                            >Ngày nghiệm thu</label
+                                        >
+                                        <input
+                                            type="date"
+                                            id="editAcceptanceSigningDate"
+                                            name="acceptanceSigningDate"
+                                        />
+                                    </div>
+                                    <label for="editWarrantyExpirationDate"
+                                        >Ngày hết hạn bảo hành</label
+                                    >
+                                    <input
+                                        type="date"
+                                        id="editWarrantyExpirationDate"
+                                        name="warrantyExpirationDate"
+                                    />
                                 </div>
                             </div>
                             <div class="form-group">
@@ -255,8 +363,16 @@
                             </div>
                         </div>
                         <div class="form-actions">
-                            <button type="button" class="btn btn-secondary" id="cancelEditCustomerBtn">Bỏ Qua</button>
-                            <button type="submit" class="btn btn-primary" id="saveEditCustomerBtn">Lưu Lại</button>
+                            <button
+                                type="button"
+                                class="btn btn-secondary"
+                                id="cancelEditCustomerBtn"
+                            >
+                                Bỏ Qua
+                            </button>
+                            <button type="submit" class="btn btn-primary" id="saveEditCustomerBtn">
+                                Lưu Lại
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -275,28 +391,59 @@
                         <input type="hidden" id="editContractId" />
                         <div class="form-section">
                             <div class="form-group">
-                                <label for="editContractNumber">Số hợp đồng <span class="required">*</span></label>
-                                <input type="text" id="editContractNumber" name="contractNumber" required />
+                                <label for="editContractNumber"
+                                    >Số hợp đồng <span class="required">*</span></label
+                                >
+                                <input
+                                    type="text"
+                                    id="editContractNumber"
+                                    name="contractNumber"
+                                    required
+                                />
                             </div>
                             <div class="form-group-row">
                                 <div class="form-group">
-                                    <label for="editStartDate">Ngày bắt đầu <span class="required">*</span></label>
-                                    <input type="date" id="editStartDate" name="startDate" required />
+                                    <label for="editStartDate"
+                                        >Ngày bắt đầu <span class="required">*</span></label
+                                    >
+                                    <input
+                                        type="date"
+                                        id="editStartDate"
+                                        name="startDate"
+                                        required
+                                    />
                                 </div>
                                 <div class="form-group">
-                                    <label for="editEndDate">Ngày kết thúc <span class="required">*</span></label>
+                                    <label for="editEndDate"
+                                        >Ngày kết thúc <span class="required">*</span></label
+                                    >
                                     <input type="date" id="editEndDate" name="endDate" required />
                                 </div>
                             </div>
                             <div class="form-group">
                                 <label>Thiết bị bảo trì</label>
                                 <div id="editEquipmentItemsList"></div>
-                                <button type="button" class="btn btn-secondary" id="editAddEquipmentItemBtn" style="margin-top: 8px">+ Thêm thiết bị</button>
+                                <button
+                                    type="button"
+                                    class="btn btn-secondary"
+                                    id="editAddEquipmentItemBtn"
+                                    style="margin-top: 8px"
+                                >
+                                    + Thêm thiết bị
+                                </button>
                             </div>
                         </div>
                         <div class="form-actions">
-                            <button type="button" class="btn btn-secondary" id="cancelEditContractBtn">Bỏ Qua</button>
-                            <button type="submit" class="btn btn-primary" id="saveEditContractBtn">Lưu Lại</button>
+                            <button
+                                type="button"
+                                class="btn btn-secondary"
+                                id="cancelEditContractBtn"
+                            >
+                                Bỏ Qua
+                            </button>
+                            <button type="submit" class="btn btn-primary" id="saveEditContractBtn">
+                                Lưu Lại
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -315,8 +462,16 @@
                         <div class="form-section">
                             <div class="form-group-row">
                                 <div class="form-group">
-                                    <label for="whSequenceNumber">STT <span class="required">*</span></label>
-                                    <input type="number" id="whSequenceNumber" name="sequenceNumber" min="1" required />
+                                    <label for="whSequenceNumber"
+                                        >STT <span class="required">*</span></label
+                                    >
+                                    <input
+                                        type="number"
+                                        id="whSequenceNumber"
+                                        name="sequenceNumber"
+                                        min="1"
+                                        required
+                                    />
                                 </div>
                                 <div class="form-group">
                                     <label for="whDate">Ngày <span class="required">*</span></label>
@@ -324,19 +479,37 @@
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label for="whTaskType">Loại công tác <span class="required">*</span></label>
-                                <select id="whTaskType" name="taskType" required>
+                                <label for="whTaskType"
+                                    >Loại công tác <span class="required">*</span></label
+                                >
+                                <select
+                                    id="whTaskType"
+                                    name="taskType"
+                                    class="candidate-congtac"
+                                    required
+                                >
                                     <option value="maintenance">Bảo trì</option>
                                     <option value="warranty">Bảo hành</option>
-                                    <option value="customer requested repair">Khách hàng y/c sửa chữa</option>
-                                    <option value="company requested repair">Cty y/c sửa chữa</option>
+                                    <option value="customer requested repair">
+                                        Khách hàng y/c sửa chữa
+                                    </option>
+                                    <option value="company requested repair">
+                                        Cty y/c sửa chữa
+                                    </option>
                                     <option value="other">Khác</option>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <label>Nội dung</label>
                                 <div id="whContentsList"></div>
-                                <button type="button" class="btn btn-secondary" id="addWhContentBtn" style="margin-top: 8px">+ Thêm nội dung</button>
+                                <button
+                                    type="button"
+                                    class="btn btn-secondary"
+                                    id="addWhContentBtn"
+                                    style="margin-top: 8px"
+                                >
+                                    + Thêm nội dung
+                                </button>
                             </div>
                             <div class="form-group">
                                 <label for="whNotes">Ghi chú</label>
@@ -344,8 +517,20 @@
                             </div>
                         </div>
                         <div class="form-actions">
-                            <button type="button" class="btn btn-secondary" id="cancelAddWarrantyHistoryBtn">Bỏ Qua</button>
-                            <button type="submit" class="btn btn-primary" id="saveWarrantyHistoryBtn">Lưu Lại</button>
+                            <button
+                                type="button"
+                                class="btn btn-secondary"
+                                id="cancelAddWarrantyHistoryBtn"
+                            >
+                                Bỏ Qua
+                            </button>
+                            <button
+                                type="submit"
+                                class="btn btn-primary"
+                                id="saveWarrantyHistoryBtn"
+                            >
+                                Lưu Lại
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -365,28 +550,56 @@
                         <div class="form-section">
                             <div class="form-group-row">
                                 <div class="form-group">
-                                    <label for="editWhSequenceNumber">STT <span class="required">*</span></label>
-                                    <input type="number" id="editWhSequenceNumber" name="sequenceNumber" min="1" required />
+                                    <label for="editWhSequenceNumber"
+                                        >STT <span class="required">*</span></label
+                                    >
+                                    <input
+                                        type="number"
+                                        id="editWhSequenceNumber"
+                                        name="sequenceNumber"
+                                        min="1"
+                                        required
+                                    />
                                 </div>
                                 <div class="form-group">
-                                    <label for="editWhDate">Ngày <span class="required">*</span></label>
+                                    <label for="editWhDate"
+                                        >Ngày <span class="required">*</span></label
+                                    >
                                     <input type="date" id="editWhDate" name="date" required />
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label for="editWhTaskType">Loại công tác <span class="required">*</span></label>
-                                <select id="editWhTaskType" name="taskType" required>
+                                <label for="editWhTaskType"
+                                    >Loại công tác <span class="required">*</span></label
+                                >
+                                <select
+                                    id="editWhTaskType"
+                                    name="taskType"
+                                    class="candidate-congtac"
+                                    required
+                                >
                                     <option value="maintenance">Bảo trì</option>
                                     <option value="warranty">Bảo hành</option>
-                                    <option value="customer requested repair">Khách hàng y/c sửa chữa</option>
-                                    <option value="company requested repair">Cty y/c sửa chữa</option>
+                                    <option value="customer requested repair">
+                                        Khách hàng y/c sửa chữa
+                                    </option>
+                                    <option value="company requested repair">
+                                        Cty y/c sửa chữa
+                                    </option>
                                     <option value="other">Khác</option>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <label>Nội dung</label>
                                 <div id="editWhContentsList"></div>
-                                <button type="button" class="btn btn-secondary" id="editAddWhContentBtn" style="margin-top: 8px">+ Thêm nội dung</button>
+                                <button
+                                    type="button"
+                                    class="btn btn-secondary"
+                                    id="editAddWhContentBtn"
+                                    style="margin-top: 8px"
+                                >
+                                    + Thêm nội dung
+                                </button>
                             </div>
                             <div class="form-group">
                                 <label for="editWhNotes">Ghi chú</label>
@@ -394,8 +607,20 @@
                             </div>
                         </div>
                         <div class="form-actions">
-                            <button type="button" class="btn btn-secondary" id="cancelEditWarrantyHistoryBtn">Bỏ Qua</button>
-                            <button type="submit" class="btn btn-primary" id="saveEditWarrantyHistoryBtn">Lưu Lại</button>
+                            <button
+                                type="button"
+                                class="btn btn-secondary"
+                                id="cancelEditWarrantyHistoryBtn"
+                            >
+                                Bỏ Qua
+                            </button>
+                            <button
+                                type="submit"
+                                class="btn btn-primary"
+                                id="saveEditWarrantyHistoryBtn"
+                            >
+                                Lưu Lại
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -410,23 +635,50 @@
                     <button class="close-btn" id="closeMaintenanceReportModalBtn">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <div id="maintenanceReportLoading" class="loading-spinner">Đang tải danh sách...</div>
-                    <div id="maintenanceReportContent" style="display:none">
-                        <p class="form-hint">Chọn khách hàng cần tạo phiếu bảo trì trong tháng này:</p>
-                        <div class="form-group" style="margin-bottom:12px; max-width:220px">
-                            <label for="reportVisitDate" style="font-size:0.875rem; font-weight:500">Ngày công tác <span class="required">*</span></label>
-                            <input type="date" id="reportVisitDate" style="margin-top:4px" />
+                    <div id="maintenanceReportLoading" class="loading-spinner">
+                        Đang tải danh sách...
+                    </div>
+                    <div id="maintenanceReportContent" style="display: none">
+                        <p class="form-hint">
+                            Chọn khách hàng cần tạo phiếu bảo trì trong tháng này:
+                        </p>
+                        <div class="form-group" style="margin-bottom: 12px; max-width: 220px">
+                            <label
+                                for="reportVisitDate"
+                                style="font-size: 0.875rem; font-weight: 500"
+                                >Ngày công tác <span class="required">*</span></label
+                            >
+                            <input type="date" id="reportVisitDate" style="margin-top: 4px" />
                         </div>
                         <div id="maintenanceReportList"></div>
-                        <div class="form-actions" style="margin-top:16px">
-                            <button type="button" class="btn btn-secondary" id="cancelMaintenanceReportBtn">Hủy</button>
+                        <div class="form-actions" style="margin-top: 16px">
+                            <button
+                                type="button"
+                                class="btn btn-secondary"
+                                id="cancelMaintenanceReportBtn"
+                            >
+                                Hủy
+                            </button>
                             <button type="button" class="btn btn-primary" id="generateReportBtn">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                <svg
+                                    width="15"
+                                    height="15"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2.5"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                    <polyline points="7 10 12 15 17 10" />
+                                    <line x1="12" y1="15" x2="12" y2="3" />
+                                </svg>
                                 Tạo File
                             </button>
                         </div>
                     </div>
-                    <div id="maintenanceReportEmpty" style="display:none" class="empty-state">
+                    <div id="maintenanceReportEmpty" style="display: none" class="empty-state">
                         Không có khách hàng nào có hợp đồng bảo trì còn hiệu lực trong tháng này.
                     </div>
                 </div>

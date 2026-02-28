@@ -1,8 +1,100 @@
+function fmtDate(d?: string | Date | null): string {
+    if (!d) {
+        return '—'
+    }
+    const date = new Date(d)
+    return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`
+}
+
 function init(): void {
-    window.addEventListener('DOMContentLoaded', () => {
-        setupSidebar()
-        renderListPage()
+    window.addEventListener('DOMContentLoaded', async () => {
+        const savedUrl = await window.api.getDbUrl()
+        if (savedUrl) {
+            renderSetupPage(savedUrl, true)
+            const result = await window.api.connectDb(savedUrl)
+            if (result.success) {
+                launchApp()
+            } else {
+                renderSetupPage('', false, result.error)
+            }
+        } else {
+            renderSetupPage()
+        }
     })
+}
+
+function launchApp(): void {
+    document.getElementById('setupOverlay')?.remove()
+    document.getElementById('sidebar')!.style.display = ''
+    setupSidebar()
+    renderListPage()
+}
+
+function renderSetupPage(prefillUrl = '', connecting = false, errorMsg?: string, canCancel = false): void {
+    document.getElementById('sidebar')!.style.display = 'none'
+    document.getElementById('app')!.innerHTML = ''
+
+    let overlay = document.getElementById('setupOverlay')
+    if (!overlay) {
+        overlay = document.createElement('div')
+        overlay.id = 'setupOverlay'
+        document.body.appendChild(overlay)
+    }
+
+    overlay.innerHTML = `
+        <div class="setup-card">
+            <div class="setup-logo">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                    <path d="M9 3v18M15 3v18M3 9h18M3 15h18"/>
+                </svg>
+            </div>
+            <h1 class="setup-title">Hera Flow</h1>
+            <p class="setup-subtitle">Nhập địa chỉ MongoDB để bắt đầu</p>
+            <form id="setupForm" class="setup-form">
+                <div class="form-group">
+                    <label for="setupUrl">MongoDB URL</label>
+                    <input
+                        type="password"
+                        id="setupUrl"
+                        placeholder="mongodb://localhost:27017/hera"
+                        value="${prefillUrl}"
+                        autocomplete="off"
+                        spellcheck="false"
+                        required
+                    />
+                </div>
+                ${errorMsg ? `<div class="setup-error">${errorMsg}</div>` : ''}
+                <button type="submit" class="btn btn-primary setup-btn" id="setupConnectBtn" ${connecting ? 'disabled' : ''}>
+                    ${connecting ? 'Đang kết nối...' : 'Kết nối'}
+                </button>
+                ${canCancel ? `<button type="button" class="btn setup-btn" id="setupCancelBtn" style="margin-top:8px;background:none;border:1px solid var(--border,#e5e7eb);color:var(--text-secondary,#6b7280)">Huỷ</button>` : ''}
+            </form>
+        </div>
+    `
+
+    const form = document.getElementById('setupForm') as HTMLFormElement
+    const btn = document.getElementById('setupConnectBtn') as HTMLButtonElement
+
+    form.onsubmit = async (e) => {
+        e.preventDefault()
+        const url = (document.getElementById('setupUrl') as HTMLInputElement).value.trim()
+        if (!url) return
+
+        btn.disabled = true
+        btn.textContent = 'Đang kết nối...'
+
+        const result = await window.api.connectDb(url)
+        if (result.success) {
+            launchApp()
+        } else {
+            renderSetupPage(url, false, result.error, canCancel)
+        }
+    }
+
+    if (canCancel) {
+        document.getElementById('setupCancelBtn')?.addEventListener('click', () => launchApp())
+    }
 }
 
 // ─── SIDEBAR ──────────────────────────────────────────────────────────────────
@@ -12,13 +104,30 @@ function setupSidebar(): void {
     const toggleBtn = document.getElementById('sidebarToggleBtn')!
     const navCustomers = document.getElementById('navCustomers')!
     const navTrash = document.getElementById('navTrash')!
+    const navChangeDb = document.getElementById('navChangeDb')!
 
     const collapsed = localStorage.getItem('sidebarCollapsed') === 'true'
-    if (collapsed) sidebar.classList.add('collapsed')
+    if (collapsed) {
+        sidebar.classList.add('collapsed')
+    }
+
+    sidebar.addEventListener('click', () => {
+        if (sidebar.classList.contains('collapsed')) {
+            sidebar.classList.remove('collapsed')
+            localStorage.setItem('sidebarCollapsed', 'false')
+        }
+    })
 
     toggleBtn.addEventListener('click', () => {
         sidebar.classList.toggle('collapsed')
         localStorage.setItem('sidebarCollapsed', String(sidebar.classList.contains('collapsed')))
+    })
+
+    document.addEventListener('click', (e) => {
+        if (!sidebar.classList.contains('collapsed') && !sidebar.contains(e.target as Node)) {
+            sidebar.classList.add('collapsed')
+            localStorage.setItem('sidebarCollapsed', 'true')
+        }
     })
 
     navCustomers.addEventListener('click', () => {
@@ -29,6 +138,10 @@ function setupSidebar(): void {
     navTrash.addEventListener('click', () => {
         setActiveNav('navTrash')
         renderTrashPage()
+    })
+
+    navChangeDb.addEventListener('click', async () => {
+        renderSetupPage('', false, undefined, true)
     })
 }
 
@@ -107,9 +220,9 @@ function renderListPage(): void {
             <div class="filter-bar">
                 <div class="filter-buttons">
                     <button class="filter-btn active" data-filter="all">Tất cả</button>
-                    <button class="filter-btn" data-filter="active">Còn hạn BH</button>
+                    <button class="filter-btn" data-filter="active">Còn hạn</button>
                     <button class="filter-btn filter-btn--warning" data-filter="expiring">Sắp hết hạn</button>
-                    <button class="filter-btn filter-btn--danger" data-filter="expired">Hết hạn BH</button>
+                    <button class="filter-btn filter-btn--danger" data-filter="expired">Hết hạn</button>
                 </div>
                 <div class="filter-search">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -209,7 +322,7 @@ function setupMaintenanceReportModal(): void {
                 return
             }
 
-            const fmt = (d?: string | null) => (d ? new Date(d).toLocaleDateString('vi-VN') : '—')
+            const fmt = fmtDate
 
             const contentsSubRow = (i: number, lastContents: string[] | null) => `
                 <tr class="candidate-contents-row" id="candidate-contents-${i}" style="display:none">
@@ -250,13 +363,13 @@ function setupMaintenanceReportModal(): void {
                             <td><input type="checkbox" class="candidate-check" data-idx="${i}" /></td>
                             <td>${c.customerName}</td>
                             <td>${c.companyName || '—'}</td>
-                            <td class="col-center">${c.contractNumber || '—'}</td>
+                            <td class="col-center">${c.contractNumber || (c.isWarrantyOnly ? '<span title="Bảo hành" style="color:var(--text-secondary,#6b7280);font-size:0.75rem">Bảo hành</span>' : '—')}</td>
                             <td class="col-center">${fmt(c.endDate)}</td>
                             <td>
                                 <select class="candidate-congtac" data-idx="${i}">
                                     ${CONG_TAC_OPTIONS.map(
                                         (opt) =>
-                                            `<option value="${opt.value}"${opt.value === 'baotri' ? ' selected' : ''}>${opt.label}</option>`
+                                            `<option value="${opt.value}"${opt.value === (c.isWarrantyOnly ? 'baohanh' : 'baotri') ? ' selected' : ''}>${opt.label}</option>`
                                     ).join('')}
                                 </select>
                             </td>
@@ -283,12 +396,30 @@ function setupMaintenanceReportModal(): void {
                 })
             })
 
+            // Click anywhere on a candidate row to toggle its checkbox
+            document.querySelectorAll<HTMLTableRowElement>('tr[data-candidate-idx]').forEach((row) => {
+                row.style.cursor = 'pointer'
+                row.addEventListener('click', (e) => {
+                    const target = e.target as HTMLElement
+                    if (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'BUTTON') {
+                        return
+                    }
+                    const idx = row.dataset.candidateIdx
+                    const cb = row.querySelector<HTMLInputElement>(`.candidate-check[data-idx="${idx}"]`)
+                    if (cb) {
+                        cb.checked = !cb.checked
+                    }
+                })
+            })
+
             // Toggle per-candidate contents sub-row
             document.querySelectorAll('.btn-toggle-contents').forEach((btn) => {
                 btn.addEventListener('click', () => {
                     const idx = (btn as HTMLElement).dataset.idx
                     const subRow = document.getElementById(`candidate-contents-${idx}`)
-                    if (!subRow) return
+                    if (!subRow) {
+                        return
+                    }
                     const isHidden = subRow.style.display === 'none'
                     subRow.style.display = isHidden ? '' : 'none'
                     ;(btn as HTMLElement).textContent = isHidden ? '▴' : '▾'
@@ -308,13 +439,17 @@ function setupMaintenanceReportModal(): void {
     closeBtn.addEventListener('click', closeModal)
     cancelBtn.addEventListener('click', closeModal)
     modal.addEventListener('click', (e) => {
-        if (e.target === modal) closeModal()
+        if (e.target === modal) {
+            closeModal()
+        }
     })
 
     generateBtn.addEventListener('click', async () => {
         const listEl = document.getElementById('maintenanceReportList')!
         const candidatesRaw = listEl.dataset.candidates
-        if (!candidatesRaw) return
+        if (!candidatesRaw) {
+            return
+        }
 
         const candidates = JSON.parse(candidatesRaw)
         const checked = document.querySelectorAll('.candidate-check:checked')
@@ -373,27 +508,67 @@ function setupMaintenanceReportModal(): void {
     })
 }
 
-function getWarrantyStatus(customer: any): 'active' | 'expiring' | 'expired' | 'none' {
-    if (!customer.warrantyExpirationDate) return 'none'
+function getDateStatus(
+    date: string | null | undefined
+): 'active' | 'expiring' | 'expired' | 'none' {
+    if (!date) {
+        return 'none'
+    }
     const now = new Date()
-    const exp = new Date(customer.warrantyExpirationDate)
-    const daysLeft = (exp.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-    if (daysLeft < 0) return 'expired'
-    if (daysLeft <= 30) return 'expiring'
+    const daysLeft = (new Date(date).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+    if (daysLeft <= 0) {
+        return 'expired'
+    }
+    if (daysLeft <= 30) {
+        return 'expiring'
+    }
     return 'active'
+}
+
+function getWarrantyStatus(customer: any): 'active' | 'expiring' | 'expired' | 'none' {
+    return getDateStatus(customer.warrantyExpirationDate)
+}
+
+function getLatestContractEndDate(customer: any): string | null {
+    const contracts = (customer.maintenanceContracts as any[]) || []
+    return contracts.reduce(
+        (max: string | null, c: any) =>
+            c.endDate && (!max || new Date(c.endDate) > new Date(max)) ? c.endDate : max,
+        null
+    )
 }
 
 function applyFilter(customers: any[]): any[] {
     return customers.filter((c) => {
         if (activeFilter !== 'all') {
-            const status = getWarrantyStatus(c)
-            if (activeFilter === 'active' && status !== 'active') return false
-            if (activeFilter === 'expiring' && status !== 'expiring') return false
-            if (activeFilter === 'expired' && status !== 'expired') return false
+            const warrantyStatus = getWarrantyStatus(c)
+            const contractStatus = getDateStatus(getLatestContractEndDate(c))
+            const matches = (status: string) =>
+                warrantyStatus === status || contractStatus === status
+            if (activeFilter === 'active' && !matches('active')) {
+                return false
+            }
+            if (activeFilter === 'expiring' && !matches('expiring')) {
+                return false
+            }
+            if (activeFilter === 'expired') {
+                const hasActiveService =
+                    warrantyStatus === 'active' ||
+                    warrantyStatus === 'expiring' ||
+                    contractStatus === 'active' ||
+                    contractStatus === 'expiring'
+                const hasExpiredService =
+                    warrantyStatus === 'expired' || contractStatus === 'expired'
+                if (hasActiveService || !hasExpiredService) {
+                    return false
+                }
+            }
         }
         if (searchQuery) {
             const haystack = [c.customerName, c.companyName, c.address].join(' ').toLowerCase()
-            if (!haystack.includes(searchQuery)) return false
+            if (!haystack.includes(searchQuery)) {
+                return false
+            }
         }
         return true
     })
@@ -401,7 +576,9 @@ function applyFilter(customers: any[]): any[] {
 
 function renderFilteredTable(): void {
     const containerEl = document.getElementById('customersContainer')
-    if (!containerEl) return
+    if (!containerEl) {
+        return
+    }
 
     const filtered = applyFilter(allCustomers)
 
@@ -419,8 +596,10 @@ function renderFilteredTable(): void {
                     <th>Công ty</th>
                     <th>Địa chỉ</th>
                     <th class="col-center">Ngày ký HĐ</th>
+                    <th class="col-center">Ngày kiểm định</th>
                     <th class="col-center">Ngày nghiệm thu</th>
                     <th class="col-center">Hết hạn BH</th>
+                    <th class="col-center">HĐ bảo trì đến</th>
                     <th class="col-center">Ghi chú</th>
                     <th class="col-action"></th>
                 </tr>
@@ -439,7 +618,9 @@ function renderFilteredTable(): void {
         btn.addEventListener('click', () => {
             const id = (btn as HTMLElement).dataset.editCustomerId!
             const customer = allCustomers.find((c: any) => c._id === id)
-            if (customer) openEditCustomerModal(customer)
+            if (customer) {
+                openEditCustomerModal(customer)
+            }
         })
     })
     containerEl.querySelectorAll('[data-delete-customer-id]').forEach((btn) => {
@@ -447,8 +628,9 @@ function renderFilteredTable(): void {
             const id = (btn as HTMLElement).dataset.deleteCustomerId!
             const customer = allCustomers.find((c: any) => c._id === id)
             const name = customer?.customerName ?? 'khách hàng này'
-            if (!confirm(`Bạn có chắc muốn xóa "${name}"?\nHành động này không thể hoàn tác.`))
+            if (!confirm(`Bạn có chắc muốn xóa "${name}"?\nHành động này không thể hoàn tác.`)) {
                 return
+            }
             try {
                 await window.api.deleteCustomer(id)
                 loadCustomers()
@@ -495,7 +677,12 @@ function setupAddCustomerForm(): void {
         e.preventDefault()
         const formData = new FormData(form)
         const data: any = Object.fromEntries(formData.entries())
-        ;['contractSigningDate', 'acceptanceSigningDate', 'warrantyExpirationDate'].forEach((f) => {
+        ;[
+            'contractSigningDate',
+            'acceptanceSigningDate',
+            'warrantyExpirationDate',
+            'inspectionDate'
+        ].forEach((f) => {
             if (!data[f]) {
                 data[f] = null
             }
@@ -543,11 +730,17 @@ function setupEditCustomerForm(): void {
         form?.reset()
     }
 
-    if (closeBtn) closeBtn.onclick = closeModal
-    if (cancelBtn) cancelBtn.onclick = closeModal
+    if (closeBtn) {
+        closeBtn.onclick = closeModal
+    }
+    if (cancelBtn) {
+        cancelBtn.onclick = closeModal
+    }
     if (modal) {
         modal.onclick = (e) => {
-            if (e.target === modal) closeModal()
+            if (e.target === modal) {
+                closeModal()
+            }
         }
     }
 
@@ -563,6 +756,7 @@ function setupEditCustomerForm(): void {
             contractSigningDate: raw.contractSigningDate || null,
             acceptanceSigningDate: raw.acceptanceSigningDate || null,
             warrantyExpirationDate: raw.warrantyExpirationDate || null,
+            inspectionDate: raw.inspectionDate || null,
             notes: raw.notes ? [raw.notes] : []
         }
 
@@ -613,6 +807,9 @@ function openEditCustomerModal(customer: any): void {
     )
     ;(document.getElementById('editWarrantyExpirationDate') as HTMLInputElement).value =
         toDateInput(customer.warrantyExpirationDate)
+    ;(document.getElementById('editInspectionDate') as HTMLInputElement).value = toDateInput(
+        customer.inspectionDate
+    )
     ;(document.getElementById('editNotes') as HTMLTextAreaElement).value =
         (customer.notes as string[])?.join(', ') || ''
     modal?.classList.add('show')
@@ -649,9 +846,27 @@ async function loadCustomers(): Promise<void> {
 }
 
 function renderWarrantyCell(customer: any): string {
-    if (!customer.warrantyExpirationDate) return '<td class="col-center">—</td>'
+    if (!customer.warrantyExpirationDate) {
+        return '<td class="col-center">—</td>'
+    }
     const status = getWarrantyStatus(customer)
-    const dateStr = new Date(customer.warrantyExpirationDate).toLocaleDateString('vi-VN')
+    const dateStr = fmtDate(customer.warrantyExpirationDate)
+    const badgeClass =
+        status === 'expired'
+            ? 'warranty-badge warranty-badge--expired'
+            : status === 'expiring'
+              ? 'warranty-badge warranty-badge--expiring'
+              : 'warranty-badge warranty-badge--active'
+    return `<td class="col-center"><span class="${badgeClass}">${dateStr}</span></td>`
+}
+
+function renderContractCell(customer: any): string {
+    const latestEndDate = getLatestContractEndDate(customer)
+    if (!latestEndDate) {
+        return '<td class="col-center">—</td>'
+    }
+    const status = getDateStatus(latestEndDate)
+    const dateStr = fmtDate(latestEndDate)
     const badgeClass =
         status === 'expired'
             ? 'warranty-badge warranty-badge--expired'
@@ -662,7 +877,7 @@ function renderWarrantyCell(customer: any): string {
 }
 
 function renderCustomerRow(customer: any, index: number): string {
-    const fmt = (d?: string | null) => (d ? new Date(d).toLocaleDateString('vi-VN') : '—')
+    const fmt = fmtDate
     const notes = (customer.notes as string[])?.join(', ') || '—'
     return `
         <tr>
@@ -671,8 +886,10 @@ function renderCustomerRow(customer: any, index: number): string {
             <td>${customer.companyName || '—'}</td>
             <td>${customer.address}</td>
             <td class="col-center">${fmt(customer.contractSigningDate)}</td>
+            <td class="col-center">${fmt(customer.inspectionDate)}</td>
             <td class="col-center">${fmt(customer.acceptanceSigningDate)}</td>
             ${renderWarrantyCell(customer)}
+            ${renderContractCell(customer)}
             <td class="col-center">${notes}</td>
             <td class="col-action">
                 <div class="row-actions">
@@ -751,7 +968,7 @@ async function loadCustomerDetail(customerId: string): Promise<void> {
             return
         }
 
-        const fmt = (d?: string | null) => (d ? new Date(d).toLocaleDateString('vi-VN') : '—')
+        const fmt = fmtDate
         const contracts = (customer.maintenanceContracts as any[]) || []
         const warrantyHistory = (customer.warrantyHistory as any[]) || []
 
@@ -786,6 +1003,10 @@ async function loadCustomerDetail(customerId: string): Promise<void> {
                     <div class="detail-field">
                         <span class="detail-label">Hết hạn bảo hành</span>
                         <span class="detail-value">${fmt(customer.warrantyExpirationDate)}</span>
+                    </div>
+                    <div class="detail-field">
+                        <span class="detail-label">Ngày kiểm định</span>
+                        <span class="detail-value">${fmt(customer.inspectionDate)}</span>
                     </div>
                     <div class="detail-field">
                         <span class="detail-label">Ghi chú</span>
@@ -883,7 +1104,9 @@ async function loadCustomerDetail(customerId: string): Promise<void> {
         container.querySelectorAll('[data-delete-contract]').forEach((btn) => {
             btn.addEventListener('click', async () => {
                 const id = (btn as HTMLElement).dataset.deleteContract!
-                if (!confirm('Bạn có chắc muốn xóa hợp đồng này?')) return
+                if (!confirm('Bạn có chắc muốn xóa hợp đồng này?')) {
+                    return
+                }
                 try {
                     await window.api.deleteMaintenanceContract(id)
                     loadCustomerDetail(customerId)
@@ -897,7 +1120,9 @@ async function loadCustomerDetail(customerId: string): Promise<void> {
         container.querySelectorAll('[data-delete-warranty]').forEach((btn) => {
             btn.addEventListener('click', async () => {
                 const id = (btn as HTMLElement).dataset.deleteWarranty!
-                if (!confirm('Bạn có chắc muốn xóa mục lịch sử này?')) return
+                if (!confirm('Bạn có chắc muốn xóa mục lịch sử này?')) {
+                    return
+                }
                 try {
                     await window.api.deleteWarrantyHistory(id)
                     loadCustomerDetail(customerId)
@@ -916,7 +1141,9 @@ async function loadCustomerDetail(customerId: string): Promise<void> {
                     sequenceNumber: el.dataset.seq!,
                     date: el.dataset.date!,
                     taskType: el.dataset.taskType!,
-                    maintenanceContents: JSON.parse(decodeURIComponent(el.dataset.contents || '[]')),
+                    maintenanceContents: JSON.parse(
+                        decodeURIComponent(el.dataset.contents || '[]')
+                    ),
                     notes: decodeURIComponent(el.dataset.notes || '')
                 })
             })
@@ -931,7 +1158,7 @@ async function loadCustomerDetail(customerId: string): Promise<void> {
 }
 
 function renderContractRow(contract: any): string {
-    const fmt = (d?: string) => (d ? new Date(d).toLocaleDateString('vi-VN') : '—')
+    const fmt = fmtDate
     const items = (contract.equipmentItems as any[]) || []
     const itemsHtml = items.length
         ? items
@@ -1092,19 +1319,29 @@ function setupEditContractForm(customerId: string): void {
         itemsList?.appendChild(row)
     }
 
-    if (addItemBtn) addItemBtn.onclick = () => addEquipmentRow()
+    if (addItemBtn) {
+        addItemBtn.onclick = () => addEquipmentRow()
+    }
 
     const closeModal = () => {
         modal?.classList.remove('show')
         form?.reset()
-        if (itemsList) itemsList.innerHTML = ''
+        if (itemsList) {
+            itemsList.innerHTML = ''
+        }
     }
 
-    if (closeBtn) closeBtn.onclick = closeModal
-    if (cancelBtn) cancelBtn.onclick = closeModal
+    if (closeBtn) {
+        closeBtn.onclick = closeModal
+    }
+    if (cancelBtn) {
+        cancelBtn.onclick = closeModal
+    }
     if (modal) {
         modal.onclick = (e) => {
-            if (e.target === modal) closeModal()
+            if (e.target === modal) {
+                closeModal()
+            }
         }
     }
 
@@ -1155,7 +1392,9 @@ function setupEditContractForm(customerId: string): void {
 function openEditContractModal(contract: any): void {
     const modal = document.getElementById('editContractModal')
     const itemsList = document.getElementById('editEquipmentItemsList')
-    if (itemsList) itemsList.innerHTML = ''
+    if (itemsList) {
+        itemsList.innerHTML = ''
+    }
 
     const toDateInput = (d?: string) => (d ? new Date(d).toISOString().split('T')[0] : '')
     ;(document.getElementById('editContractId') as HTMLInputElement).value = contract._id
@@ -1208,24 +1447,38 @@ function setupAddWarrantyHistoryForm(customerId: string): void {
         contentsList?.appendChild(row)
     }
 
-    if (addContentBtn) addContentBtn.onclick = () => addContentRow()
+    if (addContentBtn) {
+        addContentBtn.onclick = () => addContentRow()
+    }
 
     const openModal = () => {
-        if (contentsList) contentsList.innerHTML = ''
+        if (contentsList) {
+            contentsList.innerHTML = ''
+        }
         modal?.classList.add('show')
     }
     const closeModal = () => {
         modal?.classList.remove('show')
         form?.reset()
-        if (contentsList) contentsList.innerHTML = ''
+        if (contentsList) {
+            contentsList.innerHTML = ''
+        }
     }
 
-    if (openBtn) openBtn.onclick = openModal
-    if (closeBtn) closeBtn.onclick = closeModal
-    if (cancelBtn) cancelBtn.onclick = closeModal
+    if (openBtn) {
+        openBtn.onclick = openModal
+    }
+    if (closeBtn) {
+        closeBtn.onclick = closeModal
+    }
+    if (cancelBtn) {
+        cancelBtn.onclick = closeModal
+    }
     if (modal) {
         modal.onclick = (e) => {
-            if (e.target === modal) closeModal()
+            if (e.target === modal) {
+                closeModal()
+            }
         }
     }
 
@@ -1286,19 +1539,29 @@ function setupEditWarrantyHistoryForm(customerId: string): void {
         contentsList?.appendChild(row)
     }
 
-    if (addContentBtn) addContentBtn.onclick = () => addContentRow()
+    if (addContentBtn) {
+        addContentBtn.onclick = () => addContentRow()
+    }
 
     const closeModal = () => {
         modal?.classList.remove('show')
         form?.reset()
-        if (contentsList) contentsList.innerHTML = ''
+        if (contentsList) {
+            contentsList.innerHTML = ''
+        }
     }
 
-    if (closeBtn) closeBtn.onclick = closeModal
-    if (cancelBtn) cancelBtn.onclick = closeModal
+    if (closeBtn) {
+        closeBtn.onclick = closeModal
+    }
+    if (cancelBtn) {
+        cancelBtn.onclick = closeModal
+    }
     if (modal) {
         modal.onclick = (e) => {
-            if (e.target === modal) closeModal()
+            if (e.target === modal) {
+                closeModal()
+            }
         }
     }
 
@@ -1342,7 +1605,9 @@ function setupEditWarrantyHistoryForm(customerId: string): void {
 function openEditWarrantyHistoryModal(entry: any): void {
     const modal = document.getElementById('editWarrantyHistoryModal')
     const contentsList = document.getElementById('editWhContentsList')
-    if (contentsList) contentsList.innerHTML = ''
+    if (contentsList) {
+        contentsList.innerHTML = ''
+    }
 
     const toDateInput = (d?: string) => (d ? new Date(d).toISOString().split('T')[0] : '')
     ;(document.getElementById('editWarrantyHistoryId') as HTMLInputElement).value = entry._id
@@ -1403,8 +1668,9 @@ async function renderTrashPage(): Promise<void> {
             !confirm(
                 'Xóa vĩnh viễn tất cả các mục trong thùng rác? Hành động này không thể hoàn tác.'
             )
-        )
+        ) {
             return
+        }
         try {
             await window.api.trashEmpty()
             loadTrashData()
@@ -1418,7 +1684,9 @@ async function renderTrashPage(): Promise<void> {
 async function loadTrashData(): Promise<void> {
     const loadingEl = document.getElementById('trashLoading')
     const container = document.getElementById('trashContainer')
-    if (!container) return
+    if (!container) {
+        return
+    }
 
     try {
         const [customers, contracts] = await Promise.all([
@@ -1426,12 +1694,15 @@ async function loadTrashData(): Promise<void> {
             window.api.trashGetDeletedContracts()
         ])
 
-        if (loadingEl) loadingEl.style.display = 'none'
+        if (loadingEl) {
+            loadingEl.style.display = 'none'
+        }
 
         const emptyTrashBtn = document.getElementById('emptyTrashBtn') as HTMLButtonElement | null
-        if (emptyTrashBtn)
+        if (emptyTrashBtn) {
             emptyTrashBtn.style.display =
                 customers.length === 0 && contracts.length === 0 ? 'none' : ''
+        }
 
         if (customers.length === 0 && contracts.length === 0) {
             container.innerHTML = `
@@ -1448,7 +1719,7 @@ async function loadTrashData(): Promise<void> {
             return
         }
 
-        const fmt = (d?: string | null) => (d ? new Date(d).toLocaleDateString('vi-VN') : '—')
+        const fmt = fmtDate
 
         const iconPerson = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`
         const iconContract = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`
@@ -1546,7 +1817,9 @@ async function loadTrashData(): Promise<void> {
         container.querySelectorAll('[data-restore-customer]').forEach((btn) => {
             btn.addEventListener('click', async () => {
                 const id = (btn as HTMLElement).dataset.restoreCustomer!
-                if (!confirm('Khôi phục khách hàng này và các hợp đồng liên quan?')) return
+                if (!confirm('Khôi phục khách hàng này và các hợp đồng liên quan?')) {
+                    return
+                }
                 try {
                     await window.api.trashRestoreCustomer(id)
                     loadTrashData()
@@ -1559,7 +1832,9 @@ async function loadTrashData(): Promise<void> {
         container.querySelectorAll('[data-perm-delete-customer]').forEach((btn) => {
             btn.addEventListener('click', async () => {
                 const id = (btn as HTMLElement).dataset.permDeleteCustomer!
-                if (!confirm('Xóa vĩnh viễn khách hàng này? Hành động không thể hoàn tác.')) return
+                if (!confirm('Xóa vĩnh viễn khách hàng này? Hành động không thể hoàn tác.')) {
+                    return
+                }
                 try {
                     await window.api.trashPermanentDeleteCustomer(id)
                     loadTrashData()
@@ -1572,7 +1847,9 @@ async function loadTrashData(): Promise<void> {
         container.querySelectorAll('[data-restore-contract]').forEach((btn) => {
             btn.addEventListener('click', async () => {
                 const id = (btn as HTMLElement).dataset.restoreContract!
-                if (!confirm('Khôi phục hợp đồng bảo trì này?')) return
+                if (!confirm('Khôi phục hợp đồng bảo trì này?')) {
+                    return
+                }
                 try {
                     await window.api.trashRestoreContract(id)
                     loadTrashData()
@@ -1585,7 +1862,9 @@ async function loadTrashData(): Promise<void> {
         container.querySelectorAll('[data-perm-delete-contract]').forEach((btn) => {
             btn.addEventListener('click', async () => {
                 const id = (btn as HTMLElement).dataset.permDeleteContract!
-                if (!confirm('Xóa vĩnh viễn hợp đồng này? Hành động không thể hoàn tác.')) return
+                if (!confirm('Xóa vĩnh viễn hợp đồng này? Hành động không thể hoàn tác.')) {
+                    return
+                }
                 try {
                     await window.api.trashPermanentDeleteContract(id)
                     loadTrashData()

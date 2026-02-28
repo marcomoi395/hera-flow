@@ -137,7 +137,7 @@
 
 .sidebar.collapsed .sidebar-nav-item {
     justify-content: center;
-    padding: 9px 0;
+    padding: 11px 0;
 }
 
 .sidebar.collapsed .sidebar-user {
@@ -217,14 +217,14 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 9px 10px;
+    padding: 11px 12px;
     border-radius: 8px;
     color: var(--sidebar-text);
     background: transparent;
     border: none;
     cursor: pointer;
     font-family: inherit;
-    font-size: 0.875rem;
+    font-size: 0.9rem;
     font-weight: 500;
     text-align: left;
     width: 100%;
@@ -1270,4 +1270,77 @@ body {
     background: #fff0f0;
     color: #ef4444;
     border-color: #fca5a5;
+}
+
+/* ─── SETUP / CONNECTION PAGE ─────────────────────────────────────────────── */
+
+#setupOverlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-primary, #0f172a);
+    z-index: 9999;
+}
+
+.setup-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 2.5rem 2rem;
+    width: 100%;
+    max-width: 460px;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.setup-logo {
+    color: var(--primary-color);
+    margin-bottom: 0.25rem;
+}
+
+.setup-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.setup-subtitle {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin: 0 0 1rem;
+}
+
+.setup-form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.setup-form .form-group {
+    margin-bottom: 0.75rem;
+}
+
+.setup-error {
+    background: #fef2f2;
+    border: 1px solid #fca5a5;
+    color: #dc2626;
+    border-radius: var(--radius-md);
+    padding: 0.6rem 0.875rem;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+    word-break: break-all;
+}
+
+.setup-btn {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1rem;
+    margin-top: 0.25rem;
 }
