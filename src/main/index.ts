@@ -69,9 +69,6 @@ app.whenReady().then(() => {
         optimizer.watchWindowShortcuts(window)
     })
 
-    // IPC test
-    ipcMain.on('ping', () => console.log('pong'))
-
     // DB connection IPC handlers
     ipcMain.handle('get-db-url', () => {
         return readConfig().mongoUrl ?? null
